@@ -363,38 +363,24 @@ Numero subclass: #Entero
 	poolDictionaries: ''
 	category: 'Numero-Exercise'!
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 19:56:52'!
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/13/2019 15:34:01'!
 * aMultiplier 
-	
 	^aMultiplier multiplicacionConEnteros: self.
 	
 	
 	! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 08:56:49'!
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/13/2019 15:34:08'!
 + anAdder 
-	
-	"^self class with: value + anAdder integerValue"
-	"|isAnEntero|
-	
-	isAnEntero := (anAdder class  = Entero) ifTrue: 1 ifFalse: 2 .
-	
-	^self sumaDeEnteroCon: isAnEntero and: anAdder .
-	"
 	^anAdder sumaConEnteros: self.
 ! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 19:27:36'!
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/13/2019 15:34:13'!
 - aSubtrahend 
-	
-	"^ self class with: value - aSubtrahend integerValue."
 	^aSubtrahend restaConEnteros: self.! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 09:10:31'!
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/13/2019 15:34:21'!
 / aDivisor 
-	"
-	^Fraccion with: self over: aDivisor"
-	
 	^ aDivisor divisionConEnteros: self.
 	
 	! !
@@ -413,9 +399,9 @@ divisionConFraccion: aNumero
 
 	^(aNumero numerator )/ ((aNumero denominator)* self) ! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'HAW 9/24/2018 08:47:50'!
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/13/2019 16:20:42'!
 fibonacci
-
+"
 	| one two |
 	
 	one := Entero with: 1.
@@ -425,6 +411,24 @@ fibonacci
 	(self isZero or: [self isOne]) ifTrue: [^one].
 	
 	^ (self - one) fibonacci + (self - two) fibonacci
+		"
+		
+		|fibonaccis ultimo anteUltimo nuevofib times|
+		fibonaccis _ OrderedCollection with: 1 with: 1.
+		ultimo := 2.
+		anteUltimo := 1.
+		times:= self integerValue +1.
+		self isNegative ifTrue: [self error: Entero negativeFibonacciErrorDescription ].
+		times timesRepeat: [nuevofib := (fibonaccis at:ultimo) + (fibonaccis at:anteUltimo).
+							fibonaccis addLast: nuevofib;yourself.
+							ultimo := ultimo +1.
+							anteUltimo := anteUltimo +1].
+		^Entero with: (fibonaccis at: (self integerValue +1)).				
+		
+		
+		
+		
+		
 		! !
 
 !Entero methodsFor: 'arithmetic operations' stamp: 'HernanWilkinson 5/7/2016 21:00'!
@@ -538,11 +542,8 @@ Numero subclass: #Fraccion
 	poolDictionaries: ''
 	category: 'Numero-Exercise'!
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 09:17:10'!
-* aMultiplier 
-	
-	"^(numerator * aMultiplier numerator) / (denominator * aMultiplier denominator)"
-	
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/13/2019 15:32:33'!
+* aMultiplier 	
 	^aMultiplier multiplicacionConFraccion: self.
 	! !
 
@@ -551,28 +552,18 @@ Numero subclass: #Fraccion
 		
 	^anAdder sumaConFracciones: self.! !
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 22:16:43'!
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/13/2019 15:32:23'!
 - aSubtrahend 
-	"
-	| newNumerator newDenominator |
 	
-	newNumerator := (numerator * aSubtrahend denominator) - (denominator * aSubtrahend numerator).
-	newDenominator := denominator * aSubtrahend denominator.
-	
-	^newNumerator / newDenominator 
-	"
 	^aSubtrahend restaConFraccion: self.! !
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 19:31:10'!
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/13/2019 15:32:44'!
 / aDivisor 
-	
-	"^(numerator * aDivisor denominator) / (denominator * aDivisor numerator)"
 	^aDivisor divisionConFraccion: self.
 ! !
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 22:14:42'!
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/13/2019 15:33:02'!
 divisionConEnteros: aNumero
-	"yo ya sé que soy una fraccion y aNumero es un entero"
 	^(self denominator * aNumero )/( self numerator ).! !
 
 !Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 19:30:29'!
@@ -583,9 +574,8 @@ divisionConFraccion: aNumero
 multiplicacionConEnteros: aMultiplier
 	^((self numerator )*aMultiplier )/self denominator .! !
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 20:46:11'!
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/13/2019 15:33:12'!
 multiplicacionConFraccion:aNumero
-
 	^((self numerator * aNumero numerator)/ (self denominator * aNumero denominator )).
 	! !
 
