@@ -363,77 +363,55 @@ Numero subclass: #Entero
 	poolDictionaries: ''
 	category: 'Numero-Exercise'!
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/10/2019 08:26:05'!
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 19:56:52'!
 * aMultiplier 
-	"
-	^self class with: value * aMultiplier integerValue"
-	|isAnEntero|
 	
-	isAnEntero := (aMultiplier class  = Entero) ifTrue: 1 ifFalse: 2 .
+	^aMultiplier multiplicacionConEnteros: self.
 	
-	^ self multiplicaciónDeEnteroCon: isAnEntero and: aMultiplier.
 	
 	! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 10:49:48'!
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 08:56:49'!
 + anAdder 
 	
 	"^self class with: value + anAdder integerValue"
-	|isAnEntero|
+	"|isAnEntero|
 	
 	isAnEntero := (anAdder class  = Entero) ifTrue: 1 ifFalse: 2 .
 	
 	^self sumaDeEnteroCon: isAnEntero and: anAdder .
-	
+	"
+	^anAdder sumaConEnteros: self.
 ! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 10:50:52'!
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 19:27:36'!
 - aSubtrahend 
 	
 	"^ self class with: value - aSubtrahend integerValue."
-	|isAnEntero|
-	
-	isAnEntero := (aSubtrahend class  = Entero) ifTrue: 1 ifFalse: 2 .
-	
-	^self restaDeEnteroCon: isAnEntero and: aSubtrahend .! !
+	^aSubtrahend restaConEnteros: self.! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/10/2019 09:02:47'!
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 09:10:31'!
 / aDivisor 
 	"
 	^Fraccion with: self over: aDivisor"
 	
-	|isAnEntero|
+	^ aDivisor divisionConEnteros: self.
 	
-	isAnEntero := (aDivisor class  = Entero) ifTrue: 1 ifFalse: 2 .
-	
-	^self divisionDeEnterosCon: isAnEntero and: aDivisor.! !
+	! !
 
 !Entero methodsFor: 'arithmetic operations' stamp: 'HernanWilkinson 5/7/2016 21:55'!
 // aDivisor 
 	
 	^self class with: value // aDivisor integerValue! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/10/2019 09:11:00'!
-divisionDeEnterosCon: aTypeOfNumero and: aNumero
-	|typesOfDivitions divisionConEnteros divisionConFracciones|
-	divisionConEnteros := [self divisionDeEnterosConEnteros: aNumero ].
-	divisionConFracciones := [self divisionDeEnterosConFracciones: aNumero ].
-	typesOfDivitions := Array with: divisionConEnteros with: divisionConFracciones .
-	^(typesOfDivitions at: aTypeOfNumero ) value. ! !
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 09:10:16'!
+divisionConEnteros: aNumero
+	^Fraccion with: aNumero over: self.! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/10/2019 09:08:25'!
-divisionDeEnterosConEnteros: aNumero
-	^Fraccion with: self over: aNumero .! !
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 20:43:17'!
+divisionConFraccion: aNumero
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 10:11:44'!
-divisionDeEnterosConFracciones: aNumero
-	|aNumeroInvertido|
-	
-	aNumeroInvertido := Fraccion new.
-	
-	aNumeroInvertido initializeWith: (aNumero denominator ) over: (aNumero numerator ).
-	
-	^self* aNumeroInvertido .! !
+	^(aNumero numerator )/ ((aNumero denominator)* self) ! !
 
 !Entero methodsFor: 'arithmetic operations' stamp: 'HAW 9/24/2018 08:47:50'!
 fibonacci
@@ -454,74 +432,38 @@ greatestCommonDivisorWith: anEntero
 	
 	^self class with: (value gcd: anEntero integerValue)! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/10/2019 08:31:10'!
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 20:06:39'!
 multiplicacionConEnteros: aMultiplier
-^self class with: value * aMultiplier integerValue.! !
-
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/10/2019 08:43:47'!
-multiplicacionConFracciones: aNumero
-	|nuevoNumerador resultado|
-	
-	nuevoNumerador := self * aNumero numerator.
-	
-	resultado := Fraccion  new.
-	resultado initializeWith: nuevoNumerador over: (aNumero denominator ).
-	
-	^resultado.
-	
+	^self class with: value * aMultiplier integerValue .
 	
 	! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/10/2019 08:39:16'!
-multiplicaciónDeEnteroCon:aTypeOfNumero and: aNumero
-	|typesOfMultiplication multiplicacionConEnteros multiplicacionConFracciones|
-	multiplicacionConEnteros := [self multiplicacionConEnteros: aNumero ].
-	multiplicacionConFracciones := [self multiplicacionConFracciones: aNumero ].
-	typesOfMultiplication := Array with: multiplicacionConEnteros with: multiplicacionConFracciones .
-	^(typesOfMultiplication at: aTypeOfNumero ) value. ! !
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 20:14:55'!
+multiplicacionConFraccion:aNumero
+	^(self* (aNumero numerator ))/ (aNumero denominator )	! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 10:54:31'!
-restaDeEnteroCon:aTypeOfNumero and: aNumero
-	|typesOfSubstraction restaConEnteros restaDeEnterosyFracciones|
-	restaConEnteros := [self restaDeEnterosConEnteros: aNumero ].
-	restaDeEnterosyFracciones := [self restaDeEnterosConFracciones: aNumero ].
-	typesOfSubstraction := Array with: restaConEnteros with: restaDeEnterosyFracciones .
-	^(typesOfSubstraction at: aTypeOfNumero ) value. ! !
-
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 10:53:38'!
-restaDeEnterosConEnteros: aNumero
-	^ self class with: value - aNumero integerValue.! !
-
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 10:56:46'!
-restaDeEnterosConFracciones: aNumero
-	|selfComoFraccion |
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 22:06:26'!
+restaConEnteros: aNumero
 	
-	selfComoFraccion := Fraccion new.
-	
-	selfComoFraccion initializeWith: (self*(aNumero denominator )) over: (self*(aNumero denominator )).
-	
-	^selfComoFraccion -aNumero .! !
+	^ Entero with: aNumero integerValue - value
+		
+! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/9/2019 19:02:43'!
-sumaDeEnteroCon: aTypeOfNumber and: aNumber
-	|typesOfAdding sumaConEnteros sumaDeEnterosyFracciones|
-	sumaConEnteros := [self sumaDeEnterosConEnteros: aNumber ].
-	sumaDeEnterosyFracciones := [self sumaDeEnterosConFracciones: aNumber ].
-	typesOfAdding := Array with: sumaConEnteros with: sumaDeEnterosyFracciones .
-	^(typesOfAdding at: aTypeOfNumber ) value. ! !
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 22:28:03'!
+restaConFraccion:aNumero
+	|nuevoNumerador |
+	nuevoNumerador := aNumero numerator - (aNumero denominator * self).
+	^nuevoNumerador / aNumero denominator .! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/9/2019 18:15:26'!
-sumaDeEnterosConEnteros:aEntero
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 09:06:15'!
+sumaConEnteros:aEntero
 
-	^self class with: value + aEntero integerValue! !
+	^self class with: value + aEntero  integerValue .! !
 
-!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/9/2019 18:24:02'!
-sumaDeEnterosConFracciones: aFraccion
-	|selfAsFraction selfNumeratorAndDenominator|
-	selfAsFraction := Fraccion new.
-	selfNumeratorAndDenominator := self*(aFraccion denominator ).
-	selfAsFraction initializeWith: selfNumeratorAndDenominator over: selfNumeratorAndDenominator.
-	^ selfAsFraction  + aFraccion.! !
+!Entero methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 19:42:26'!
+sumaConFracciones: aNumero
+
+	^((aNumero denominator * self)+aNumero numerator )/(aNumero denominator ).! !
 
 
 !Entero methodsFor: 'comparing' stamp: 'HernanWilkinson 5/7/2016 21:01'!
@@ -596,33 +538,20 @@ Numero subclass: #Fraccion
 	poolDictionaries: ''
 	category: 'Numero-Exercise'!
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/10/2019 08:54:33'!
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 09:17:10'!
 * aMultiplier 
 	
 	"^(numerator * aMultiplier numerator) / (denominator * aMultiplier denominator)"
-	|isAFracction|
 	
-	isAFracction := (aMultiplier class  = Fraccion ) ifTrue: 1 ifFalse: 2 .
-	
-	^ self multiplicacionDeFraccionCon: isAFracction and: aMultiplier.
+	^aMultiplier multiplicacionConFraccion: self.
 	! !
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/9/2019 19:06:09'!
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 19:54:03'!
 + anAdder 
-	"
-	| newNumerator newDenominator |
-	
-	newNumerator := (numerator * anAdder denominator) + (denominator * anAdder numerator).
-	newDenominator := denominator * anAdder denominator.
-	
-	^newNumerator / newDenominator "
-	|isAfraccion|
-	
-	isAfraccion := (anAdder class  = Fraccion ) ifTrue: 1 ifFalse: 2 .
-	
-	^self sumaDeDosNumeros: isAfraccion and: anAdder .! !
+		
+	^anAdder sumaConFracciones: self.! !
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 11:01:07'!
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 22:16:43'!
 - aSubtrahend 
 	"
 	| newNumerator newDenominator |
@@ -632,96 +561,52 @@ Numero subclass: #Fraccion
 	
 	^newNumerator / newDenominator 
 	"
-	|isFraccion|
-	
-	isFraccion := (aSubtrahend class  = Fraccion ) ifTrue: 1 ifFalse: 2 .
-	
-	^self restaDeFraccionCon: isFraccion and: aSubtrahend .! !
+	^aSubtrahend restaConFraccion: self.! !
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 10:05:14'!
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 19:31:10'!
 / aDivisor 
 	
 	"^(numerator * aDivisor denominator) / (denominator * aDivisor numerator)"
-	
-	|isAFraccion|
-	
-	isAFraccion := (aDivisor class  = Entero ) ifTrue: 1 ifFalse: 2 .
-	
-	^self divisionDeFraccionCon: isAFraccion and: aDivisor.! !
-
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 10:18:08'!
-divisionDeFraccionCon: aTypeOfNumero and: aNumero
-	|typesOfDivitions divisionConEnteros divisionConFracciones|
-	divisionConEnteros := [self divisionDeFraccionConEntero: aNumero ].
-	divisionConFracciones := [self divisionDeFraccionConFraccion: aNumero ].
-	typesOfDivitions := Array with: divisionConEnteros with: divisionConFracciones .
-	^(typesOfDivitions at: aTypeOfNumero ) value. 
+	^aDivisor divisionConFraccion: self.
 ! !
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 10:20:39'!
-divisionDeFraccionConEntero:aNumero
-	|aNumeroInvertido|
-	
-	aNumeroInvertido := Fraccion new.
-	
-	aNumeroInvertido initializeWith: (1 ) over: (aNumero ).
-	
-	^self* aNumeroInvertido .! !
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 22:14:42'!
+divisionConEnteros: aNumero
+	"yo ya sé que soy una fraccion y aNumero es un entero"
+	^(self denominator * aNumero )/( self numerator ).! !
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 10:36:03'!
-divisionDeFraccionConFraccion: aNumero
-		|nuevoNumerador nuevoDenominador resultado|
-		nuevoNumerador :=numerator * aNumero denominator.
-		nuevoDenominador :=denominator * aNumero numerator.
-		resultado := Fraccion new.
-		resultado initializeWith: nuevoNumerador over: nuevoDenominador .
-		^resultado .! !
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 19:30:29'!
+divisionConFraccion: aNumero
+	^(aNumero numerator *  denominator) / (aNumero denominator *  numerator)! !
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 10:46:45'!
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 19:46:06'!
+multiplicacionConEnteros: aMultiplier
+	^((self numerator )*aMultiplier )/self denominator .! !
+
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 20:46:11'!
 multiplicacionConFraccion:aNumero
 
-	|nuevoNumerador nuevoDenominador resultado|
-	nuevoNumerador :=(numerator * (aNumero numerator)).
-	nuevoDenominador :=(denominator * (aNumero denominator)).
-	resultado := Fraccion new.
-	resultado initializeWith: nuevoNumerador  over: nuevoDenominador .
-	^resultado.! !
+	^((self numerator * aNumero numerator)/ (self denominator * aNumero denominator )).
+	! !
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/10/2019 08:56:36'!
-multiplicacionDeFraccionCon: aTypeOfNumero and: aNumero
-	|typesOfMultiplication multiplicacionConEnteros multiplicacionConFracciones|
-	multiplicacionConEnteros := [aNumero * self].
-	multiplicacionConFracciones := [self multiplicacionConFraccion: aNumero ].
-	typesOfMultiplication := Array with: multiplicacionConFracciones with: multiplicacionConEnteros .
-	^(typesOfMultiplication at: aTypeOfNumero ) value. ! !
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 21:01:38'!
+restaConEnteros: aNumero
+	|nuevoNumerador |
+	nuevoNumerador := ((aNumero *(self denominator))- self numerator ).
+	^nuevoNumerador / self denominator ! !
 
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 11:09:37'!
-restaDeFraccionCon: aTypeOfNumero and: aNumero
-
-	|typesOfSubstraction restaConEnteros restaDeFraccionesConEnteros|
-	restaConEnteros := [self restaDeFraccionConEnteros: aNumero ].
-	restaDeFraccionesConEnteros := [self restaDeFraccionConFraccion: aNumero ].
-	typesOfSubstraction := Array with: restaDeFraccionesConEnteros with: restaConEnteros .
-	^(typesOfSubstraction at: aTypeOfNumero ) value. ! !
-
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 11:12:14'!
-restaDeFraccionConEnteros:aNumero
-	|aNumeroComoFraccion |
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 22:22:37'!
+restaConFraccion: aNumero
+	| newNumerator newDenominator |
 	
-	aNumeroComoFraccion := Fraccion new.
-	
-	aNumeroComoFraccion initializeWith: ((self denominator )*aNumero ) over: ((self denominator )* aNumero ).
-	
-	^self - aNumeroComoFraccion .! !
-
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/11/2019 11:04:57'!
-restaDeFraccionConFraccion:aNumero
-| newNumerator newDenominator |
-	
-	newNumerator := (numerator * aNumero denominator) - (denominator * aNumero numerator).
+	newNumerator :=( (denominator * aNumero numerator )- (numerator * aNumero denominator ) ).
 	newDenominator := denominator * aNumero denominator.
 	
 	^newNumerator / newDenominator ! !
+
+!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/12/2019 09:04:26'!
+sumaConEnteros: anAdder
+	^(((self denominator)* anAdder )+(self numerator))/(self denominator ).! !
 
 !Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/9/2019 19:30:52'!
 sumaConFracciones: aFraccion
@@ -731,14 +616,6 @@ sumaConFracciones: aFraccion
 	newDenominator := denominator * aFraccion denominator.
 	
 	^newNumerator / newDenominator! !
-
-!Fraccion methodsFor: 'arithmetic operations' stamp: 'Cf 4/9/2019 19:44:07'!
-sumaDeDosNumeros:typeOfNumber and:aNumber
-|typesOfAdding sumaConEnteros sumaConFracciones|
-	sumaConEnteros := [aNumber + self ].
-	sumaConFracciones := [ self sumaConFracciones: aNumber].
-	typesOfAdding := Array with: sumaConFracciones with: sumaConEnteros .
-	^(typesOfAdding at: typeOfNumber ) value. ! !
 
 
 !Fraccion methodsFor: 'comparing' stamp: 'HernanWilkinson 5/7/2016 20:42'!
