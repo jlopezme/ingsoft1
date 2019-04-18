@@ -201,7 +201,34 @@ stackEmptyErrorDescription
 
 !classDefinition: #SentenceFinderByPrefix category: #'Stack-Exercise'!
 Object subclass: #SentenceFinderByPrefix
-	instanceVariableNames: ''
+	instanceVariableNames: 'stackWithSentences auxiliarStack sizeOfStackWithSentences'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Stack-Exercise'!
+
+!SentenceFinderByPrefix methodsFor: 'initialization' stamp: 'Cf 4/18/2019 17:10:18'!
+initialize: aStack
+	stackWithSentences := aStack.
+	auxiliarStack := OOStack new.
+	sizeOfStackWithSentences := aStack size.! !
+
+
+!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/18/2019 17:10:51'!
+fillstackWithSentenceswithAuxiliarStac
+	stackWithSentences timesRepeat: [ stackWithSentences push:(auxiliarStack pop)].! !
+
+!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/18/2019 17:10:37'!
+find: aPrefix
+	|stackThatContainsaPrefix |
+	stackThatContainsaPrefix := OOStack new.
+	sizeOfStackWithSentences timesRepeat: [self seeIfTopContainsaPrefix: aPrefix ifContainsPutIn: stackThatContainsaPrefix ].
+	self fillstackWithSentenceswithAuxiliarStac.
+	^stackThatContainsaPrefix.! !
+
+!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/18/2019 16:39:40'!
+seeIfTopContainsaPrefix: aPrefix ifContainsPutIn: stackThatContainaPrefix
+	|sentenceToAnalize|
+	sentenceToAnalize := stackWithSentences pop.
+	( sentenceToAnalize includes: aPrefix ) ifTrue: [ stackThatContainaPrefix push: sentenceToAnalize].
+	auxiliarStack push: sentenceToAnalize.
+	! !
