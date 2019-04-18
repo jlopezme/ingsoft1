@@ -139,10 +139,35 @@ test10CanNotTopWhenThereAreNoObjectsInTheStack
 
 !classDefinition: #SentenceFinderByPrefixTest category: #'Stack-Exercise'!
 TestCase subclass: #SentenceFinderByPrefixTest
-	instanceVariableNames: ''
+	instanceVariableNames: 'FinderWithEmptyStack FinderWithNotEmptyStacks'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Stack-Exercise'!
+
+!SentenceFinderByPrefixTest methodsFor: 'setup' stamp: 'Cf 4/18/2019 20:29:12'!
+setUp
+	
+	|notEmptyStack emptyStack|
+	notEmptyStack := OOStack new.
+	notEmptyStack push: 'winter is coming'.
+	notEmptyStack push: 'winning is everything'.
+	notEmptyStack push: 'The winds of Winter' .
+	notEmptyStack push: 'Winter is here'.
+	FinderWithNotEmptyStacks := SentenceFinderByPrefix with: notEmptyStack .
+	emptyStack := OOStack new.
+	FinderWithEmptyStack := SentenceFinderByPrefix with: emptyStack.! !
+
+
+!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/18/2019 20:24:43'!
+test01aPrefixCantBeEmpty
+	
+	|aPrefix|
+	aPrefix :=''.
+	self
+		should: [FinderWithNotEmptyStacks find: aPrefix ]
+		raise: Error - MessageNotUnderstood 
+		withExceptionDo: [ :anError |
+			self assert: anError messageText = SentenceFinderByPrefix aPrefixCantBeEmptyErrorDescription ]! !
 
 
 !classDefinition: #OOStack category: #'Stack-Exercise'!
@@ -213,22 +238,53 @@ initialize: aStack
 	sizeOfStackWithSentences := aStack size.! !
 
 
-!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/18/2019 17:10:51'!
+!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/18/2019 19:40:39'!
 fillstackWithSentenceswithAuxiliarStac
-	stackWithSentences timesRepeat: [ stackWithSentences push:(auxiliarStack pop)].! !
+	sizeOfStackWithSentences timesRepeat: [ stackWithSentences push:(auxiliarStack pop)].! !
 
-!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/18/2019 17:10:37'!
+!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/18/2019 20:20:41'!
 find: aPrefix
+ 
 	|stackThatContainsaPrefix |
+	Halt .
+	(aPrefix = '') ifTrue: [self signalaPrefixCantBeEmpty ].
+	(aPrefix includes: ' ') ifTrue:[self signalaPrefixCantContainSpaces ].
 	stackThatContainsaPrefix := OOStack new.
 	sizeOfStackWithSentences timesRepeat: [self seeIfTopContainsaPrefix: aPrefix ifContainsPutIn: stackThatContainsaPrefix ].
 	self fillstackWithSentenceswithAuxiliarStac.
 	^stackThatContainsaPrefix.! !
 
-!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/18/2019 16:39:40'!
-seeIfTopContainsaPrefix: aPrefix ifContainsPutIn: stackThatContainaPrefix
+!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/18/2019 19:38:55'!
+seeIfTopContainsaPrefix: aPrefix ifContainsPutIn: stackThatContainsaPrefix
 	|sentenceToAnalize|
 	sentenceToAnalize := stackWithSentences pop.
-	( sentenceToAnalize includes: aPrefix ) ifTrue: [ stackThatContainaPrefix push: sentenceToAnalize].
+	( sentenceToAnalize includes: aPrefix ) ifTrue: [ stackThatContainsaPrefix push: sentenceToAnalize].
 	auxiliarStack push: sentenceToAnalize.
 	! !
+
+!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/18/2019 20:12:54'!
+signalaPrefixCantBeEmpty
+	self error: self class aPrefixCantBeEmptyErrorDescription.! !
+
+!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/18/2019 20:14:05'!
+signalaPrefixCantContainSpaces
+		self error: self class aPrefixCantContainSpacesErrorDescription.! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'SentenceFinderByPrefix class' category: #'Stack-Exercise'!
+SentenceFinderByPrefix class
+	instanceVariableNames: ''!
+
+!SentenceFinderByPrefix class methodsFor: 'Errors' stamp: 'Cf 4/18/2019 20:10:02'!
+aPrefixCantBeEmptyErrorDescription
+	^'a Prefix cant be empty'! !
+
+!SentenceFinderByPrefix class methodsFor: 'Errors' stamp: 'Cf 4/18/2019 20:14:05'!
+aPrefixCantContainSpacesErrorDescription	
+	^'a Prefix cant contain spaces'! !
+
+
+!SentenceFinderByPrefix class methodsFor: 'instance creation' stamp: 'Cf 4/18/2019 20:28:06'!
+with: aStack
+	^self new initialize: aStack ! !
