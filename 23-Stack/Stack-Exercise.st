@@ -147,49 +147,45 @@ TestCase subclass: #SentenceFinderByPrefixTest
 
 !classDefinition: #OOStack category: #'Stack-Exercise'!
 Object subclass: #OOStack
-	instanceVariableNames: 'stack'
+	instanceVariableNames: 'top last stack'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Stack-Exercise'!
 
-!OOStack methodsFor: 'operacionesDelStack' stamp: 'Cf 4/16/2019 14:40:09'!
+!OOStack methodsFor: 'operacionesDelStack' stamp: 'Cf 4/18/2019 15:17:14'!
 isEmpty
-	^stack isEmpty.! !
+	^ self size = 0.! !
 
-!OOStack methodsFor: 'operacionesDelStack' stamp: 'Cf 4/16/2019 15:07:18'!
+!OOStack methodsFor: 'operacionesDelStack' stamp: 'Cf 4/18/2019 15:48:09'!
 pop
-	(stack isEmpty) ifTrue:  [ 
-		^self error: self stackEmptyErrorDescription  ].
-	
-	^stack removeFirst.
-	! !
+	top := top - 1.
+	^stack removeLast value.
+! !
 
-!OOStack methodsFor: 'operacionesDelStack' stamp: 'Cf 4/16/2019 14:41:49'!
+!OOStack methodsFor: 'operacionesDelStack' stamp: 'Cf 4/18/2019 15:26:17'!
 push: newTop
-	stack addFirst: newTop.! !
+	stack addLast: newTop.
+	top := top +1.! !
 
-!OOStack methodsFor: 'operacionesDelStack' stamp: 'Cf 4/16/2019 14:51:27'!
+!OOStack methodsFor: 'operacionesDelStack' stamp: 'Cf 4/18/2019 15:50:45'!
+signalPopCantBeUsedInEmptyStack
+	self error: self class stackEmptyErrorDescription.! !
+
+!OOStack methodsFor: 'operacionesDelStack' stamp: 'Cf 4/18/2019 15:25:55'!
 size
-	^ stack size.! !
+	^ top - last.! !
 
-!OOStack methodsFor: 'operacionesDelStack' stamp: 'Cf 4/16/2019 15:12:14'!
+!OOStack methodsFor: 'operacionesDelStack' stamp: 'Cf 4/18/2019 15:50:26'!
 top
-	(self isEmpty ) ifTrue: [
-		^self error: self stackEmptyErrorDescription  
-		]. 
-	
-	^ stack first.! !
+	^(stack at: top) value.! !
 
 
-!OOStack methodsFor: 'initialization' stamp: 'Cf 4/16/2019 14:38:59'!
+!OOStack methodsFor: 'initialization' stamp: 'Cf 4/18/2019 15:46:46'!
 initialize
-	stack := OrderedCollection new.! !
-
-
-!OOStack methodsFor: 'Handlers' stamp: 'Cf 4/16/2019 15:09:48'!
-stackEmptyErrorDescription
-	
-	^ 'Stack is empty'! !
+	top:=1.
+	last:=1.
+	stack := OrderedCollection new.
+	stack addFirst: [self signalPopCantBeUsedInEmptyStack].! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
