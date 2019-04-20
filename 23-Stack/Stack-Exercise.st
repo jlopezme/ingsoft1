@@ -144,13 +144,13 @@ TestCase subclass: #SentenceFinderByPrefixTest
 	poolDictionaries: ''
 	category: 'Stack-Exercise'!
 
-!SentenceFinderByPrefixTest methodsFor: 'setup' stamp: 'Cf 4/20/2019 15:57:53'!
+!SentenceFinderByPrefixTest methodsFor: 'setup' stamp: 'Cf 4/20/2019 16:17:47'!
 setUp
 	
 	
 	|notEmptyStack emptyStack|
 	emptyPrefix := ''.
-	prefixWithSpaces := 'hola mundo'.
+	prefixWithSpaces := 'hola mundo hola'.
 	notEmptyStack := OOStack new.
 	notEmptyStack push: 'winter is coming'.
 	notEmptyStack push: 'winning is everything'.
@@ -167,11 +167,20 @@ test01aPrefixCantBeEmpty
 	self thisBlock: [FinderWithNotEmptyStacks find: emptyPrefix] shouldRaise: SentenceFinderByPrefix 	aPrefixCantBeEmptyErrorDescription.
 ! !
 
-!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/20/2019 16:14:15'!
+!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/20/2019 16:22:29'!
 test02aPrefixCantContainSpaces
 	
 	self thisBlock: [FinderWithNotEmptyStacks find: prefixWithSpaces] shouldRaise: SentenceFinderByPrefix 	aPrefixCantContainSpacesErrorDescription
-! !
+	! !
+
+!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/20/2019 16:46:30'!
+test03anEmptyStackWithAnyValidPrefixShouldReturnEmptyString
+	self assert: (FinderWithEmptyStack find: notEmptyPrefix ) equals: emptyPrefix .
+	self assert: (FinderWithEmptyStack find: prefixWithSpaces ) equals: emptyPrefix .! !
+
+!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/20/2019 17:07:16'!
+test04ifOneSentenceStartWithPrefixItWillBeReturn
+	self assert: (FinderWithNotEmptyStacks find: 'Win') equals: 'Winter is here'.! !
 
 !SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/20/2019 16:10:42'!
 thisBlock: aBlock shouldRaise: errorType 
@@ -254,29 +263,19 @@ initialize: aStack
 fillstackWithSentenceswithAuxiliarStac
 	sizeOfStackWithSentences timesRepeat: [ stackWithSentences push:(auxiliarStack pop)].! !
 
-!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/20/2019 15:34:32'!
+!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/20/2019 16:44:00'!
 find: aPrefix
- 
-	"|stackThatContainsaPrefix |
-	(aPrefix = '') ifTrue: [self signalaPrefixCantBeEmpty ].
-	(aPrefix includes: ' ') ifTrue:[self signalaPrefixCantContainSpaces ].
-	stackThatContainsaPrefix := OOStack new.
-	sizeOfStackWithSentences timesRepeat: [self seeIfTopContainsaPrefix: aPrefix ifContainsPutIn: stackThatContainsaPrefix ].
-	self fillstackWithSentenceswithAuxiliarStac.
-	^stackThatContainsaPrefix."
-	|res|
-	 "res := self class createSFBYUsing:  aPrefix and: stackWithSentences."
-	res:= SentenceFinderByPrefix createSFBYUsing: aPrefix and: stackWithSentences.
-	res lookFor: aPrefix .! !
+	^(SentenceFinderByPrefix createSFBYUsing: aPrefix and: stackWithSentences) lookFor: aPrefix. ! !
 
 !SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/20/2019 13:51:02'!
 lookFor: aPrefix
 	self subclassResponsibility.! !
 
-!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/18/2019 19:38:55'!
+!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/20/2019 17:15:00'!
 seeIfTopContainsaPrefix: aPrefix ifContainsPutIn: stackThatContainsaPrefix
 	|sentenceToAnalize|
 	sentenceToAnalize := stackWithSentences pop.
+	"no puedo usar includes para hacer la busqueda"
 	( sentenceToAnalize includes: aPrefix ) ifTrue: [ stackThatContainsaPrefix push: sentenceToAnalize].
 	auxiliarStack push: sentenceToAnalize.
 	! !
@@ -304,12 +303,11 @@ aPrefixCantContainSpacesErrorDescription
 	^'a Prefix cant contain spaces'! !
 
 
-!SentenceFinderByPrefix class methodsFor: 'instance creation' stamp: 'Cf 4/20/2019 14:07:14'!
+!SentenceFinderByPrefix class methodsFor: 'instance creation' stamp: 'Cf 4/20/2019 16:43:32'!
 createSFBYUsing: thisPrefix and: thisStack
-	"aca es donde vienen los ifs de ver que es el aPrefix"
-	(thisPrefix = '') ifTrue: [^ EmptyPrefix new].
-	((thisPrefix indexOf: $ ) = 0) ifFalse: [^ PrefixWithSpace new].
+	(thisPrefix= '') ifTrue: [^ EmptyPrefix new].
 	(thisStack isEmpty ) ifTrue: [^WithaEmptyStack new].
+	((thisPrefix indexOf: $ ) = 0) ifFalse: [^ PrefixWithSpace new].
 	^ WithNotEmptyStack with: thisStack.
 	! !
 
@@ -355,15 +353,16 @@ NotEmptyPrefix subclass: #WithNotEmptyStack
 	poolDictionaries: ''
 	category: 'Stack-Exercise'!
 
-!WithNotEmptyStack methodsFor: 'as yet unclassified' stamp: 'Cf 4/20/2019 14:11:32'!
+!WithNotEmptyStack methodsFor: 'as yet unclassified' stamp: 'Cf 4/20/2019 17:07:54'!
 lookFor: aPrefix
-	|stackThatContainsaPrefix |
+	|stackThatContainsaPrefix numberOfSentencesThatContainsaPrefix |
 	stackThatContainsaPrefix := OOStack new.
 	sizeOfStackWithSentences timesRepeat: [self seeIfTopContainsaPrefix: aPrefix ifContainsPutIn: stackThatContainsaPrefix ].
 	self fillstackWithSentenceswithAuxiliarStac.
-	"aca tengo que hacer lo de imprimir las oraciones "
-	
-	"^stackThatContainsaPrefix."! !
+	numberOfSentencesThatContainsaPrefix := stackThatContainsaPrefix size.
+	^ '' , (numberOfSentencesThatContainsaPrefix timesRepeat: [^stackThatContainsaPrefix pop
+		, '']).
+	! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -405,8 +404,9 @@ SentenceFinderByPrefix subclass: #PrefixWithSpace
 	poolDictionaries: ''
 	category: 'Stack-Exercise'!
 
-!PrefixWithSpace methodsFor: 'as yet unclassified' stamp: 'Cf 4/20/2019 13:29:52'!
+!PrefixWithSpace methodsFor: 'as yet unclassified' stamp: 'Cf 4/20/2019 16:20:35'!
 lookFor: aPrefix
+	Halt.
 	^ self signalaPrefixCantContainSpaces.! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
