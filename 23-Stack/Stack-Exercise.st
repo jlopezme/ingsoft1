@@ -178,9 +178,9 @@ test03anEmptyStackWithAnyValidPrefixShouldReturnEmptyString
 	self assert: (FinderWithEmptyStack find: notEmptyPrefix ) equals: emptyPrefix .
 	self assert: (FinderWithEmptyStack find: prefixWithSpaces ) equals: emptyPrefix .! !
 
-!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/20/2019 17:07:16'!
+!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/21/2019 11:00:50'!
 test04ifOneSentenceStartWithPrefixItWillBeReturn
-	self assert: (FinderWithNotEmptyStacks find: 'Win') equals: 'Winter is here'.! !
+	self assert: (FinderWithNotEmptyStacks find: 'Win') equals: 'Winter is here '.! !
 
 !SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/20/2019 16:10:42'!
 thisBlock: aBlock shouldRaise: errorType 
@@ -271,12 +271,18 @@ find: aPrefix
 lookFor: aPrefix
 	self subclassResponsibility.! !
 
-!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/20/2019 17:15:00'!
+!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/21/2019 10:53:29'!
+seeIf:aSentence starWith: thisPrefix
+	|shortestWordsize subSentenceWithShortestWordSize |
+	shortestWordsize := (aSentence size ) min: (thisPrefix size ).
+	subSentenceWithShortestWordSize := aSentence copyFrom: 1 to: shortestWordsize .
+	^ subSentenceWithShortestWordSize = thisPrefix.! !
+
+!SentenceFinderByPrefix methodsFor: 'operaciones' stamp: 'Cf 4/21/2019 10:44:48'!
 seeIfTopContainsaPrefix: aPrefix ifContainsPutIn: stackThatContainsaPrefix
 	|sentenceToAnalize|
 	sentenceToAnalize := stackWithSentences pop.
-	"no puedo usar includes para hacer la busqueda"
-	( sentenceToAnalize includes: aPrefix ) ifTrue: [ stackThatContainsaPrefix push: sentenceToAnalize].
+	( self seeIf: sentenceToAnalize  starWith: aPrefix ) ifTrue: [ stackThatContainsaPrefix push: sentenceToAnalize].
 	auxiliarStack push: sentenceToAnalize.
 	! !
 
@@ -353,7 +359,7 @@ NotEmptyPrefix subclass: #WithNotEmptyStack
 	poolDictionaries: ''
 	category: 'Stack-Exercise'!
 
-!WithNotEmptyStack methodsFor: 'as yet unclassified' stamp: 'Cf 4/20/2019 17:07:54'!
+!WithNotEmptyStack methodsFor: 'as yet unclassified' stamp: 'Cf 4/21/2019 11:01:54'!
 lookFor: aPrefix
 	|stackThatContainsaPrefix numberOfSentencesThatContainsaPrefix |
 	stackThatContainsaPrefix := OOStack new.
@@ -361,7 +367,7 @@ lookFor: aPrefix
 	self fillstackWithSentenceswithAuxiliarStac.
 	numberOfSentencesThatContainsaPrefix := stackThatContainsaPrefix size.
 	^ '' , (numberOfSentencesThatContainsaPrefix timesRepeat: [^stackThatContainsaPrefix pop
-		, '']).
+		, ' ']).
 	! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
