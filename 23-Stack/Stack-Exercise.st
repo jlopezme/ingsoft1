@@ -139,17 +139,17 @@ test10CanNotTopWhenThereAreNoObjectsInTheStack
 
 !classDefinition: #SentenceFinderByPrefixTest category: #'Stack-Exercise'!
 TestCase subclass: #SentenceFinderByPrefixTest
-	instanceVariableNames: 'FinderWithEmptyStack FinderWithNotEmptyStacks emptyPrefix notEmptyPrefix prefixWithSpaces'
+	instanceVariableNames: 'FinderWithEmptyStack FinderWithNotEmptyStacks notEmptyPrefix prefixWithSpaces emptyString'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Stack-Exercise'!
 
-!SentenceFinderByPrefixTest methodsFor: 'setup' stamp: 'Cf 4/21/2019 11:09:01'!
+!SentenceFinderByPrefixTest methodsFor: 'setup' stamp: 'j 4/21/2019 15:59:35'!
 setUp
 	
 	
 	|notEmptyStack emptyStack|
-	emptyPrefix := ''.
+	emptyString := ''.
 	prefixWithSpaces := 'hola mundo hola'.
 	notEmptyStack := OOStack new.
 	notEmptyStack push: 'winter is coming'.
@@ -162,10 +162,10 @@ setUp
 	FinderWithEmptyStack := SentenceFinderByPrefix with: emptyStack.! !
 
 
-!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/20/2019 16:13:02'!
+!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'j 4/21/2019 15:59:35'!
 test01aPrefixCantBeEmpty
 	
-	self thisBlock: [FinderWithNotEmptyStacks find: emptyPrefix] shouldRaise: SentenceFinderByPrefix 	aPrefixCantBeEmptyErrorDescription.
+	self thisBlock: [FinderWithNotEmptyStacks find: emptyString] shouldRaise: SentenceFinderByPrefix 	aPrefixCantBeEmptyErrorDescription.
 ! !
 
 !SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/20/2019 16:22:29'!
@@ -174,14 +174,46 @@ test02aPrefixCantContainSpaces
 	self thisBlock: [FinderWithNotEmptyStacks find: prefixWithSpaces] shouldRaise: SentenceFinderByPrefix 	aPrefixCantContainSpacesErrorDescription
 	! !
 
-!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/20/2019 16:46:30'!
+!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'j 4/21/2019 15:59:35'!
 test03anEmptyStackWithAnyValidPrefixShouldReturnEmptyString
-	self assert: (FinderWithEmptyStack find: notEmptyPrefix ) equals: emptyPrefix .
-	self assert: (FinderWithEmptyStack find: prefixWithSpaces ) equals: emptyPrefix .! !
+	self assert: (FinderWithEmptyStack find: notEmptyPrefix ) equals: emptyString .
+	self assert: (FinderWithEmptyStack find: prefixWithSpaces ) equals: emptyString .! !
 
-!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/21/2019 11:41:14'!
-test04ifOneSentenceStartWithPrefixItWillBeReturn
+!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'j 4/21/2019 15:39:38'!
+test04ifOneSentenceStartsWithPrefixItWillBeReturned
 	self assert: (FinderWithNotEmptyStacks find: 'Win') equals: 'Winter is here Winter came for house Frey '.! !
+
+!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'j 4/21/2019 15:58:30'!
+test05stackStaysTheSameAfterExecutingFind
+	
+	
+	"checkeo que el stack quede igual a lo que era al comienzo, osea, que hacer find de cierto prefijo no me altere el stack, asi lo puedo volver a usar sin problemas"
+	
+	|auxStack|
+	
+	auxStack := FinderWithNotEmptyStacks.
+	
+	FinderWithNotEmptyStacks find: 'Win'.
+	self assert: (auxStack = FinderWithNotEmptyStacks ).! !
+
+!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'j 4/21/2019 16:03:03'!
+test06ifNoSentencesWithPrefixAreFoundReturnEmptyString
+
+	"si busco con tal prefijo y no encuentro ninguna respuesta valida, devuelvo un emptyString "
+
+
+	self assert: (FinderWithNotEmptyStacks find: 'cuak') equals: emptyString.! !
+
+!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'j 4/21/2019 16:06:26'!
+test07sentencesReturnedMustHavePrefixAsPrefix
+
+	"si busco con tal prefijo tengo que efectivamente devolver oraciones que tengan a ese prefijo como prefijo y no que aparezca en el medio de la oracion "
+
+	"estos checkean que no devuelva oraciones de FinderWithNothEmptyStacks que tienen a estos prefijos en el medio de las oraciones"
+	
+	self assert: (FinderWithNotEmptyStacks find: 'winds') equals: emptyString.
+	self assert: (FinderWithNotEmptyStacks find: 'he') equals: emptyString.
+	self assert: (FinderWithNotEmptyStacks find: 'is') equals: emptyString.! !
 
 !SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/20/2019 16:10:42'!
 thisBlock: aBlock shouldRaise: errorType 
