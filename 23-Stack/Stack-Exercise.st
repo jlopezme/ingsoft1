@@ -144,7 +144,7 @@ TestCase subclass: #SentenceFinderByPrefixTest
 	poolDictionaries: ''
 	category: 'Stack-Exercise'!
 
-!SentenceFinderByPrefixTest methodsFor: 'setup' stamp: 'Cf 4/20/2019 16:17:47'!
+!SentenceFinderByPrefixTest methodsFor: 'setup' stamp: 'Cf 4/21/2019 11:09:01'!
 setUp
 	
 	
@@ -156,6 +156,7 @@ setUp
 	notEmptyStack push: 'winning is everything'.
 	notEmptyStack push: 'The winds of Winter' .
 	notEmptyStack push: 'Winter is here'.
+	notEmptyStack push: 'Winter came for house Frey'.
 	FinderWithNotEmptyStacks := SentenceFinderByPrefix with: notEmptyStack .
 	emptyStack := OOStack new.
 	FinderWithEmptyStack := SentenceFinderByPrefix with: emptyStack.! !
@@ -178,9 +179,9 @@ test03anEmptyStackWithAnyValidPrefixShouldReturnEmptyString
 	self assert: (FinderWithEmptyStack find: notEmptyPrefix ) equals: emptyPrefix .
 	self assert: (FinderWithEmptyStack find: prefixWithSpaces ) equals: emptyPrefix .! !
 
-!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/21/2019 11:00:50'!
+!SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/21/2019 11:41:14'!
 test04ifOneSentenceStartWithPrefixItWillBeReturn
-	self assert: (FinderWithNotEmptyStacks find: 'Win') equals: 'Winter is here '.! !
+	self assert: (FinderWithNotEmptyStacks find: 'Win') equals: 'Winter is here Winter came for house Frey '.! !
 
 !SentenceFinderByPrefixTest methodsFor: 'tests' stamp: 'Cf 4/20/2019 16:10:42'!
 thisBlock: aBlock shouldRaise: errorType 
@@ -359,16 +360,16 @@ NotEmptyPrefix subclass: #WithNotEmptyStack
 	poolDictionaries: ''
 	category: 'Stack-Exercise'!
 
-!WithNotEmptyStack methodsFor: 'as yet unclassified' stamp: 'Cf 4/21/2019 11:01:54'!
+!WithNotEmptyStack methodsFor: 'as yet unclassified' stamp: 'Cf 4/21/2019 11:47:18'!
 lookFor: aPrefix
-	|stackThatContainsaPrefix numberOfSentencesThatContainsaPrefix |
+	|stackThatContainsaPrefix numberOfSentencesThatContainsaPrefix sentecesWithaPrefix |
 	stackThatContainsaPrefix := OOStack new.
 	sizeOfStackWithSentences timesRepeat: [self seeIfTopContainsaPrefix: aPrefix ifContainsPutIn: stackThatContainsaPrefix ].
 	self fillstackWithSentenceswithAuxiliarStac.
 	numberOfSentencesThatContainsaPrefix := stackThatContainsaPrefix size.
-	^ '' , (numberOfSentencesThatContainsaPrefix timesRepeat: [^stackThatContainsaPrefix pop
-		, ' ']).
-	! !
+	sentecesWithaPrefix := ''.
+	(numberOfSentencesThatContainsaPrefix timesRepeat: [sentecesWithaPrefix _ sentecesWithaPrefix , (stackThatContainsaPrefix pop), ' ' ]).
+	^sentecesWithaPrefix .! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
