@@ -5,43 +5,43 @@ TestCase subclass: #MarsRoverTest
 	poolDictionaries: ''
 	category: 'MarsRover-Test'!
 
-!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/7/2019 15:16:48'!
+!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/7/2019 17:10:49'!
 test00InicializarMarsRover
 	| orientacion rover origin |
 	origin _ 0@0.
-	orientacion _ #HeadingNorht.
+	orientacion _ 'Heading North'.
 	rover _ MarsRover withOrigin: origin andOrientation: orientacion.
 	
 	self assert: origin equals: rover position.
 	self assert: orientacion equals: rover orientation.
 	! !
 
-!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/7/2019 15:16:48'!
+!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/7/2019 18:09:37'!
 test01MoverConStringVacio
 	| orientacion rover comandos origen |
 	origen _ 0@0.
-	orientacion _ #HeadingNorht.
+	orientacion _ 'Heading North'.
 	rover _ MarsRover withOrigin: origen andOrientation: orientacion.
 	
 	comandos _ ''.
-	rover move: comandos.
+	rover excuteCommands: comandos.
 	
 	self assert: origen equals: rover position.
 	self assert: orientacion equals: rover orientation.
 	! !
 
-!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/7/2019 15:16:48'!
+!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/7/2019 18:53:39'!
 test02RotarDerecha
 	| orientacion rover comandos origen |
 	origen _ 0@0.
-	orientacion _ #HeadingNorht.
+	orientacion _ 'Heading North'.
 	rover _ MarsRover withOrigin: origen andOrientation: orientacion.
 	
 	comandos _ 'r'.
-	rover move: comandos.
+	rover excuteCommands: comandos.
 	
 	self assert: origen equals: rover position.
-	self assert: #East equals: rover orientation.
+	self assert: 'Heading East' equals: rover orientation.
 	! !
 
 !MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/7/2019 15:16:48'!
