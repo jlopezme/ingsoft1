@@ -16,7 +16,7 @@ test00InicializarMarsRover
 	self assert: orientacion equals: rover orientation.
 	! !
 
-!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/7/2019 18:09:37'!
+!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/11/2019 17:32:29'!
 test01MoverConStringVacio
 	| orientacion rover comandos origen |
 	origen _ 0@0.
@@ -24,13 +24,13 @@ test01MoverConStringVacio
 	rover _ MarsRover withOrigin: origen andOrientation: orientacion.
 	
 	comandos _ ''.
-	rover excuteCommands: comandos.
+	rover executeCommands: comandos.
 	
 	self assert: origen equals: rover position.
 	self assert: orientacion equals: rover orientation.
 	! !
 
-!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/7/2019 18:53:39'!
+!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/11/2019 17:32:36'!
 test02RotarDerecha
 	| orientacion rover comandos origen |
 	origen _ 0@0.
@@ -38,92 +38,82 @@ test02RotarDerecha
 	rover _ MarsRover withOrigin: origen andOrientation: orientacion.
 	
 	comandos _ 'r'.
-	rover excuteCommands: comandos.
+	rover executeCommands: comandos.
 	
 	self assert: origen equals: rover position.
 	self assert: 'Heading East' equals: rover orientation.
 	! !
 
-!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/7/2019 15:16:48'!
+!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/11/2019 17:32:39'!
 test03RotarIzquierda
 	| orientacion rover comandos origen |
 	origen _ 0@0.
-	orientacion _ #HeadingNorht.
+	orientacion _'Heading North'.
 	rover _ MarsRover withOrigin: origen andOrientation: orientacion.
 	
 	comandos _ 'l'.
-	rover move: comandos.
+	rover executeCommands: comandos.
 	
 	self assert: origen equals: rover position.
-	self assert: #West equals: rover orientation.
+	self assert: 'Heading West' equals: rover orientation.
 	! !
 
-!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/7/2019 15:16:48'!
+!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/11/2019 17:32:43'!
 test04MoverAdelante
 	| orientacion rover comandos origen |
 	origen _ 0@0.
-	orientacion _ #HeadingNorht.
+	orientacion _ 'Heading North'.
 	rover _ MarsRover withOrigin: origen andOrientation: orientacion.
 	
 	comandos _ 'f'.
-	rover move: comandos.
+	rover executeCommands: comandos.
 	
 	self assert: origen + (0@1) equals: rover position.
 	self assert: orientacion equals: rover orientation.
 	! !
 
-!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/7/2019 15:16:48'!
+!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/11/2019 17:32:59'!
 test05MoverAtras
 	| orientacion rover comandos origen |
 	origen _ 0@0.
-	orientacion _ #HeadingNorht.
+	orientacion _ 'Heading North'.
 	rover _ MarsRover withOrigin: origen andOrientation: orientacion.
 	
 	comandos _ 'b'.
-	rover move: comandos.
+	rover executeCommands: comandos.
 	
 	self assert: origen - (0@1) equals: rover position.
 	self assert: orientacion equals: rover orientation.
 	! !
 
-!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/7/2019 15:16:48'!
-test06RotarIzquierdaDosVeces
+!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/11/2019 18:01:01'!
+test06ElRoverConUnaSecuenciaValidaTerminaEnElLugarEsperado
 	| orientacion rover comandos origen |
 	origen _ 0@0.
-	orientacion _ #HeadingNorht.
+	orientacion _ 'Heading West'.
 	rover _ MarsRover withOrigin: origen andOrientation: orientacion.
 	
-	comandos _ 'll'.
-	rover move: comandos.
+	comandos _ 'flflfrb'.
+	rover executeCommands: comandos.
 	
 	self assert: origen equals: rover position.
-	self assert: #South equals: rover orientation.
+	self assert: 'Heading South' equals: rover orientation.
 	! !
 
-!MarsRoverTest methodsFor: 'testing' stamp: 'EB 5/6/2019 21:56:54'!
-test07MoverAdelanteMirandoAlSur
-	| orientacion rover comandos origen |
-	origen _ 0@0.
-	orientacion _ #South.
-	rover _ MarsRover withOrigin: origen andOrientation: orientacion.
-	
-	comandos _ 'f'.
-	rover move: comandos.
-	
-	self assert: origen + (0 @ -1) equals: rover position.
-	self assert: orientacion equals: rover orientation.
-	! !
-
-!MarsRoverTest methodsFor: 'testing' stamp: 'EB 5/6/2019 21:57:02'!
-test08MoverAdelanteMirandoAlEste
+!MarsRoverTest methodsFor: 'testing' stamp: 'Cf 5/11/2019 18:03:55'!
+test07UnComandoInválidoGeneraElerrorComandoInválidoYNoEjecutaMásComandos
 	| orientacion rover comandos origen |
 	origen _ 23@45.
-	orientacion _ #East.
+	orientacion _ 'Heading East'.
 	rover _ MarsRover withOrigin: origen andOrientation: orientacion.
 	
-	comandos _ 'f'.
-	rover move: comandos.
+	comandos _ 'fxf'.
 	
-	self assert: origen + (1 @ 0) equals: rover position.
-	self assert: orientacion equals: rover orientation.
+	[ [rover executeCommands: comandos ] value.
+	self fail ]
+		on: Error 
+		do: [ :anError |
+			self assert: anError messageText equals: MarsRover IsAInvalidCommand.	
+			self assert: rover orientation  = orientacion .
+			self assert: rover position = (origen + (1@0))] 
 	! !
