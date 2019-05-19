@@ -178,15 +178,17 @@ IntegerReport subclass: #CombinedIntegerPropertiesReport
 	poolDictionaries: ''
 	category: 'Ingsoft-IntegerReports'!
 
-!CombinedIntegerPropertiesReport methodsFor: 'reporting' stamp: 'HAW 5/12/2019 20:12:03'!
+!CombinedIntegerPropertiesReport methodsFor: 'reporting' stamp: 'cf 5/19/2019 13:31:39'!
 value
 
-	| basicPropertiesLines complexPropertiesLines lines |
+	| basicPropertiesLines complexPropertiesLines lines semaforo |
 	
+	semaforo := Semaphore new.
 	lines := OrderedCollection new.
+	semaforo signal.
 	basicPropertiesLines := (BasicIntegerPropertiesReport for: integerToAnalize) value.
 	complexPropertiesLines := (ComplexIntegerPropertiesReport for: integerToAnalize) value.
-
+	semaforo wait.
 	lines 
 		addAll: basicPropertiesLines;
 		addAll: complexPropertiesLines.
