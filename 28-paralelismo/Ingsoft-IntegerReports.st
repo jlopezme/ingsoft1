@@ -37,7 +37,7 @@ test02
 	
 ! !
 
-!IntegerReportTest methodsFor: 'tests' stamp: 'HAW 5/12/2019 20:05:09'!
+!IntegerReportTest methodsFor: 'tests' stamp: 'cf 5/19/2019 12:26:33'!
 test03
 
 	| lines report  integerToAnalize |
@@ -124,6 +124,29 @@ initializeFor: anIntegerToAnalize
 	integerToAnalize := anIntegerToAnalize ! !
 
 
+!IntegerReport methodsFor: 'reporting' stamp: 'cf 5/19/2019 12:37:03'!
+firstProcces: firstProccess titleForFirstProcces: firstproccesTitle  secondProcces: secondProcces titleForSecondProcces: secondproccesTitle  thirdProcces: thridProcces titleForThirdProcces: thirdproccesTitle
+	
+| lines firstLineProcces secondLineProcces thridLineProcces semaforo  |
+	self wait.
+	lines := OrderedCollection new.
+	firstLineProcces := OrderedCollection new.
+	secondLineProcces  := OrderedCollection new.
+	thridLineProcces  := OrderedCollection new.
+	semaforo := Semaphore new.	
+	
+		[semaforo signal .
+			(self addLineTo: firstLineProcces title: firstproccesTitle with: firstProccess )]fork.
+		
+		[(self addLineTo: secondLineProcces title: secondproccesTitle with: secondProcces )] fork.
+		
+		[(self addLineTo: thridLineProcces title: thirdproccesTitle with: thridProcces )] fork.
+		 semaforo wait .
+		lines add: (firstLineProcces at:1).
+		lines add: (secondLineProcces at:1).
+		lines add: (thridLineProcces at:1).
+	^lines! !
+
 !IntegerReport methodsFor: 'reporting' stamp: 'HAW 5/12/2019 19:12:35'!
 value
 
@@ -209,17 +232,29 @@ addNumberInBase: aBase to: lines title: aTitle
 	! !
 
 
-!IntegerOnDifferentBasesReport methodsFor: 'reporting' stamp: 'HAW 5/12/2019 20:04:08'!
+!IntegerOnDifferentBasesReport methodsFor: 'reporting' stamp: 'cf 5/19/2019 11:52:16'!
 value
 
-	| lines |
+	| lines binaryBase octogonalBase hexadecimalBase semaforo|
 	
 	self wait.
 	lines := OrderedCollection new.
-	self 
+	binaryBase  := OrderedCollection new.
+	octogonalBase  := OrderedCollection new.
+	hexadecimalBase  := OrderedCollection new.
+	semaforo := Semaphore new.
+	"self 
 		addNumberInBase: 2 to: lines title: 'Binary';
 		addNumberInBase: 8 to: lines title: 'Octal';
-		addNumberInBase: 16 to: lines title: 'Hexadecimal'.
+		addNumberInBase: 16 to: lines title: 'Hexadecimal'."
+		[semaforo signal.
+			(self addNumberInBase: 2 to: binaryBase  title: 'Binary')] fork.
+		[(self addNumberInBase: 8 to: octogonalBase  title: 'Octal')]fork.
+		[(self addNumberInBase: 16to: hexadecimalBase  title: 'Hexadecimal')]fork.
+		semaforo wait.
+		lines add: (binaryBase at: 1).
+		lines add: (octogonalBase at:1).
+		lines add: (hexadecimalBase at:1).
 		
 	^lines! !
 
@@ -245,33 +280,16 @@ IntegerPropertiesReport subclass: #BasicIntegerPropertiesReport
 	poolDictionaries: ''
 	category: 'Ingsoft-IntegerReports'!
 
-!BasicIntegerPropertiesReport methodsFor: 'reporting' stamp: 'cf 5/19/2019 11:32:04'!
+!BasicIntegerPropertiesReport methodsFor: 'reporting' stamp: 'cf 5/19/2019 12:24:47'!
 value
 
-	| lines factorialLine romanLine naturalLogarithmLine semaforo  |
-	
-
-	self wait.
-	lines := OrderedCollection new.
-	factorialLine := OrderedCollection new.
-	romanLine  := OrderedCollection new.
-	naturalLogarithmLine  := OrderedCollection new.
-	semaforo := Semaphore new.	
-	"self 
-		addLineTo: lines title: 'Factorial' with: [ integerToAnalize factorial ];
-		addLineTo: lines title: 'Factorial' with: [ self factorial ] ;
-		addLineTo: lines title: 'Roman' with: [ integerToAnalize printStringRoman ];
-		addLineTo: lines title: 'Ln' with: [ integerToAnalize ln ]."
-		[semaforo signal .(self addLineTo: factorialLine title: 'Factorial' with: [ integerToAnalize factorial ] )]fork.
+	|factorialProcces asRomanProcces naturalLogProcces  |
+			
+		factorialProcces := [ integerToAnalize factorial ].
+		asRomanProcces :=  [ integerToAnalize printStringRoman ].
+		naturalLogProcces := [ integerToAnalize ln ].
 		
-		[(self addLineTo: romanLine title: 'Roman' with: [ integerToAnalize printStringRoman ] )] fork.
-		
-		[(self addLineTo: naturalLogarithmLine title: 'Ln' with: [ integerToAnalize ln ] )] fork.
-		 semaforo wait .
-		lines add: (factorialLine at:1).
-		lines add: (romanLine at:1).
-		lines add: (naturalLogarithmLine at:1).
-	^lines! !
+	^self firstProcces: factorialProcces titleForFirstProcces: 'Factorial' secondProcces: asRomanProcces  titleForSecondProcces: 'Roman' thirdProcces: naturalLogProcces titleForThirdProcces: 'Ln'.! !
 
 
 !classDefinition: #ComplexIntegerPropertiesReport category: #'Ingsoft-IntegerReports'!
@@ -281,28 +299,11 @@ IntegerPropertiesReport subclass: #ComplexIntegerPropertiesReport
 	poolDictionaries: ''
 	category: 'Ingsoft-IntegerReports'!
 
-!ComplexIntegerPropertiesReport methodsFor: 'reporting' stamp: 'cf 5/19/2019 11:42:21'!
+!ComplexIntegerPropertiesReport methodsFor: 'reporting' stamp: 'cf 5/19/2019 12:31:29'!
 value
 
-	| lines primeLine nextPrimeLine sqrtLine semaforo|
-	
-	self wait.
-	lines := OrderedCollection new.
-	primeLine  := OrderedCollection new.
-	nextPrimeLine := OrderedCollection new.
-	sqrtLine := OrderedCollection new.
-	semaforo := Semaphore new.
-	"self 
-	
-		addLineTo: lines title: 'Prime?' with: [ integerToAnalize isPrime ];
-		addLineTo: lines title: 'Next Prime' with: [ integerToAnalize nextPrime ];
-		addLineTo: lines title: 'Sqrt' with: [ integerToAnalize sqrt ]."
-		
-		[semaforo signal. (self addLineTo:primeLine title: 'Prime?' with: [ integerToAnalize isPrime])] fork.
-		[(self addLineTo: nextPrimeLine title: 'Next Prime' with: [ integerToAnalize nextPrime ] )] fork.
-		[(self addLineTo: sqrtLine title: 'Sqrt' with: [ integerToAnalize sqrt ])] fork.
-		semaforo wait.
-		lines add: (primeLine at:1).
-		lines add: (nextPrimeLine at:1).
-		lines add: (sqrtLine at:1).
-	^lines! !
+	| primeProcces nextPrimeProcces sqrtProcces|
+	primeProcces := [ integerToAnalize isPrime].
+	nextPrimeProcces := [ integerToAnalize nextPrime ].
+	sqrtProcces := [ integerToAnalize sqrt ].
+	^ self firstProcces:  primeProcces titleForFirstProcces: 'Prime?' secondProcces: nextPrimeProcces titleForSecondProcces: 'Next Prime'   thirdProcces: sqrtProcces titleForThirdProcces: 'Sqrt' .! !
