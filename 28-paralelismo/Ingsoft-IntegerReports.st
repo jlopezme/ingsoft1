@@ -245,7 +245,7 @@ IntegerPropertiesReport subclass: #BasicIntegerPropertiesReport
 	poolDictionaries: ''
 	category: 'Ingsoft-IntegerReports'!
 
-!BasicIntegerPropertiesReport methodsFor: 'reporting' stamp: 'cf 5/18/2019 20:09:37'!
+!BasicIntegerPropertiesReport methodsFor: 'reporting' stamp: 'cf 5/19/2019 11:32:04'!
 value
 
 	| lines factorialLine romanLine naturalLogarithmLine semaforo  |
@@ -262,15 +262,12 @@ value
 		addLineTo: lines title: 'Factorial' with: [ self factorial ] ;
 		addLineTo: lines title: 'Roman' with: [ integerToAnalize printStringRoman ];
 		addLineTo: lines title: 'Ln' with: [ integerToAnalize ln ]."
+		[semaforo signal .(self addLineTo: factorialLine title: 'Factorial' with: [ integerToAnalize factorial ] )]fork.
 		
-		[semaforo signal .
-		(self addLineTo: factorialLine title: 'Factorial' with: [ integerToAnalize factorial ] )
-		. semaforo wait .]fork.
+		[(self addLineTo: romanLine title: 'Roman' with: [ integerToAnalize printStringRoman ] )] fork.
 		
-		[semaforo signal .(self addLineTo: romanLine title: 'Roman' with: [ integerToAnalize printStringRoman ] ). semaforo wait .] fork.
-		
-		[semaforo signal .(self addLineTo: naturalLogarithmLine title: 'Ln' with: [ integerToAnalize ln ] ). semaforo wait .] fork.
-	
+		[(self addLineTo: naturalLogarithmLine title: 'Ln' with: [ integerToAnalize ln ] )] fork.
+		 semaforo wait .
 		lines add: (factorialLine at:1).
 		lines add: (romanLine at:1).
 		lines add: (naturalLogarithmLine at:1).
@@ -284,16 +281,28 @@ IntegerPropertiesReport subclass: #ComplexIntegerPropertiesReport
 	poolDictionaries: ''
 	category: 'Ingsoft-IntegerReports'!
 
-!ComplexIntegerPropertiesReport methodsFor: 'reporting' stamp: 'HAW 5/12/2019 20:05:39'!
+!ComplexIntegerPropertiesReport methodsFor: 'reporting' stamp: 'cf 5/19/2019 11:42:21'!
 value
 
-	| lines |
+	| lines primeLine nextPrimeLine sqrtLine semaforo|
 	
 	self wait.
 	lines := OrderedCollection new.
-	self 
+	primeLine  := OrderedCollection new.
+	nextPrimeLine := OrderedCollection new.
+	sqrtLine := OrderedCollection new.
+	semaforo := Semaphore new.
+	"self 
+	
 		addLineTo: lines title: 'Prime?' with: [ integerToAnalize isPrime ];
 		addLineTo: lines title: 'Next Prime' with: [ integerToAnalize nextPrime ];
-		addLineTo: lines title: 'Sqrt' with: [ integerToAnalize sqrt ].
+		addLineTo: lines title: 'Sqrt' with: [ integerToAnalize sqrt ]."
 		
+		[semaforo signal. (self addLineTo:primeLine title: 'Prime?' with: [ integerToAnalize isPrime])] fork.
+		[(self addLineTo: nextPrimeLine title: 'Next Prime' with: [ integerToAnalize nextPrime ] )] fork.
+		[(self addLineTo: sqrtLine title: 'Sqrt' with: [ integerToAnalize sqrt ])] fork.
+		semaforo wait.
+		lines add: (primeLine at:1).
+		lines add: (nextPrimeLine at:1).
+		lines add: (sqrtLine at:1).
 	^lines! !
