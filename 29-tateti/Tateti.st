@@ -53,6 +53,19 @@ test04
 		self assert: (tablero fichasDeY ) equals: 0.
 		self assert: (tablero ultimoMovimiento) equals: $Y.]! !
 
+!TestTerniLapilli methodsFor: 'test' stamp: 'cf 5/20/2019 19:55:44'!
+test05
+	|tablero|
+		tablero := TerniLapilli new.
+		self assert: tablero ultimoMovimiento equals: $Y.
+		
+		self should: [tablero putYFila: 5 columna:(-1).] raise:  Error 
+			withExceptionDo:[:anError | anError messageText = TerniLapilli errorFueraDeTablero . 
+		self assert: (tablero fichasEnJuego) equals: 0.
+		self assert: (tablero fichasDeX ) equals:0.
+		self assert: (tablero fichasDeY ) equals: 0.
+		self assert: (tablero ultimoMovimiento) equals: $Y.]! !
+
 
 !classDefinition: #TerniLapilli category: #Tateti!
 Object subclass: #TerniLapilli
@@ -73,18 +86,22 @@ initialize
 	ultimoMovimiento := $Y.! !
 
 
-!TerniLapilli methodsFor: 'Operations' stamp: 'cf 5/20/2019 18:54:30'!
+!TerniLapilli methodsFor: 'Operations' stamp: 'cf 5/20/2019 19:59:16'!
 putXFila: fila columna: columna 
 	(self ultimoMovimiento = $X) ifTrue: [self signalNoEsTuTurno].
+	(1 <= fila <= 3) ifFalse: [self signalFueraDelTablero ].
+	(1 <= columna <= 3) ifFalse: [self signalFueraDelTablero ].
 	(self estaOcupado:fila y:columna) ifTrue: [ ^self signalCasillaOcupada ].
 	
 	(tablero at: fila)at: columna put:$X. 
 	cantidadDeFichasDeX := cantidadDeFichasDeX +1.
 	ultimoMovimiento := $X.! !
 
-!TerniLapilli methodsFor: 'Operations' stamp: 'cf 5/20/2019 19:00:25'!
+!TerniLapilli methodsFor: 'Operations' stamp: 'cf 5/20/2019 19:59:28'!
 putYFila: fila columna:columna
 	(self ultimoMovimiento = $Y) ifTrue: [self signalNoEsTuTurno].
+	(1 <= fila <= 3) ifFalse: [self signalFueraDelTablero ].
+	(1 <= columna <= 3) ifFalse: [self signalFueraDelTablero ].
 	(self estaOcupado:fila y:columna) ifTrue: [ ^self signalCasillaOcupada ].
 	(tablero at: fila)at: columna put:$X. 
 	cantidadDeFichasDeX := cantidadDeFichasDeX +1.
@@ -94,6 +111,10 @@ putYFila: fila columna:columna
 !TerniLapilli methodsFor: 'signals' stamp: 'cf 5/20/2019 18:29:16'!
 signalCasillaOcupada
 	^ self error: self class errorDeCasillaOcupada.! !
+
+!TerniLapilli methodsFor: 'signals' stamp: 'cf 5/20/2019 19:57:40'!
+signalFueraDelTablero
+	^ self error: self class errorFueraDeTablero.! !
 
 !TerniLapilli methodsFor: 'signals' stamp: 'cf 5/20/2019 18:55:07'!
 signalNoEsTuTurno
@@ -134,6 +155,10 @@ TerniLapilli class
 !TerniLapilli class methodsFor: 'errors' stamp: 'cf 5/20/2019 18:29:59'!
 errorDeCasillaOcupada
 	^'La Casilla se encuentra ocupada.'! !
+
+!TerniLapilli class methodsFor: 'errors' stamp: 'cf 5/20/2019 19:57:04'!
+errorFueraDeTablero
+	^'Pusiste la ficha fuera del tablero'! !
 
 !TerniLapilli class methodsFor: 'errors' stamp: 'cf 5/20/2019 18:56:19'!
 errorNoEsTuTurno
