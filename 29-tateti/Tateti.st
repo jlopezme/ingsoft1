@@ -18,7 +18,7 @@ test01XpuedePonerUnaPiedraCorrectamente
 		self assert: (tablero fichasDeO ) equals: 0.
 		self assert: (tablero quienOcupaLaPosision:  firstMove ) equals: $X.! !
 
-!TestTerniLapilli methodsFor: 'test' stamp: 'cf 5/25/2019 15:14:31'!
+!TestTerniLapilli methodsFor: 'test' stamp: 'cf 5/25/2019 15:45:59'!
 test02DosPiezasNoPuedenOcuparUnaMismaPosicion
 		|tablero aPosition|
 		aPosition := 2@2.
@@ -26,13 +26,13 @@ test02DosPiezasNoPuedenOcuparUnaMismaPosicion
 		tablero putXAt: aPosition.
 		
 		self should: [tablero putOAt: aPosition.] raise:  Error 
-			withExceptionDo:[:anError | anError messageText = TerniLapilli errorDeCasillaOcupada. 
+			withExceptionDo:[:anError | anError messageText = BoardState errorDeCasillaOcupada. 
 		self assert: (tablero fichasEnJuego) equals: 1.
 		self assert: (tablero fichasDeX ) equals:1.
 		self assert: (tablero fichasDeO ) equals: 0.
 		self assert: (tablero quienOcupaLaPosision: aPosition ) equals: $X.]! !
 
-!TestTerniLapilli methodsFor: 'test' stamp: 'cf 5/25/2019 15:16:22'!
+!TestTerniLapilli methodsFor: 'test' stamp: 'cf 5/25/2019 15:46:06'!
 test03SeRespetanLosTurnos
 	|tablero firstMove|
 		firstMove := 2@2.
@@ -40,13 +40,13 @@ test03SeRespetanLosTurnos
 		self assert: tablero ultimoMovimiento equals: $X.
 		
 		self should: [tablero putOAt: firstMove ] raise:  Error 
-			withExceptionDo:[:anError | anError messageText = TerniLapilli errorNoEsTuTurno . 
+			withExceptionDo:[:anError | anError messageText = BoardState errorNoEsTuTurno . 
 		self assert: (tablero fichasEnJuego) equals: 0.
 		self assert: (tablero fichasDeX ) equals:0.
 		self assert: (tablero fichasDeO ) equals: 0.
 		self assert: (tablero ultimoMovimiento) equals: $X.]! !
 
-!TestTerniLapilli methodsFor: 'test' stamp: 'cf 5/25/2019 15:15:22'!
+!TestTerniLapilli methodsFor: 'test' stamp: 'cf 5/25/2019 15:46:15'!
 test04NoPuedesColocarUnaPiezaFueraDelTablero
 	|tablero invalidMove|
 		tablero := TerniLapilli new.
@@ -54,7 +54,7 @@ test04NoPuedesColocarUnaPiezaFueraDelTablero
 		self assert: tablero ultimoMovimiento equals: $X.
 		
 		self should: [tablero putXAt: invalidMove ] raise:  Error 
-			withExceptionDo:[:anError | anError messageText = TerniLapilli errorFueraDeTablero . 
+			withExceptionDo:[:anError | anError messageText = BoardState errorFueraDeTablero . 
 		self assert: (tablero fichasEnJuego) equals: 0.
 		self assert: (tablero fichasDeX ) equals:0.
 		self assert: (tablero fichasDeO ) equals: 0.
@@ -145,6 +145,39 @@ test08DespuésDeGanarNadiePuedeJugar
 		self assert: (tablero fichasDeX ) equals:3.
 		self assert: (tablero fichasDeO ) equals: 2.]! !
 
+!TestTerniLapilli methodsFor: 'test' stamp: 'cf 5/25/2019 15:59:13'!
+test09NoSePuedeDeslizarPiezasAlPrincipio
+	|tablero firstPosition secondPosition|
+	tablero := TerniLapilli new.
+	firstPosition := 2@2.
+	secondPosition := 3@2.
+
+	self should: [tablero slideXFrom: firstPosition to: secondPosition ] raise:  Error 
+				withExceptionDo:[:anError | anError messageText = BoardState errorEmptyBoard . 
+		self assert: (tablero fichasEnJuego) equals: 0.
+		self assert: (tablero fichasDeX ) equals:0.
+		self assert: (tablero fichasDeO ) equals: 0.]! !
+
+!TestTerniLapilli methodsFor: 'test' stamp: 'cf 5/25/2019 16:04:58'!
+test10NoSePuedeDeslizarPiezasHastaNoLlenarlo
+	|tablero firstMove secondMove thirdMove newLocation |
+		firstMove := 1@1.
+		secondMove := 1@2.
+		thirdMove := 2@1.
+		newLocation := 3@1.
+		
+		tablero := TerniLapilli new.
+		tablero putXAt: firstMove.
+		tablero putOAt: secondMove.
+		tablero putXAt: thirdMove .
+	
+
+	self should: [tablero slideXFrom: firstMove to: newLocation ] raise:  Error 
+				withExceptionDo:[:anError | anError messageText = BoardState errorTheBoardIsNotFullYet . 
+		self assert: (tablero fichasEnJuego) equals: 3.
+		self assert: (tablero fichasDeX ) equals:2.
+		self assert: (tablero fichasDeO ) equals: 1.]! !
+
 
 !classDefinition: #BoardState category: #Tateti!
 Object subclass: #BoardState
@@ -174,6 +207,18 @@ quienOcupaLaPosision: aPosition
 	^ (board  at: (aPosition x)) at: (aPosition y).! !
 
 
+!BoardState methodsFor: 'playing' stamp: 'cf 5/25/2019 15:43:11'!
+slideOFrom: aPosition to: newPosition 
+	^self subclassResponsibility! !
+
+
+!BoardState methodsFor: 'error handling' stamp: 'cf 5/25/2019 16:01:14'!
+signalBoardIsNotFull
+	^self error self class errorTheBoardIsNotFullYet.! !
+
+!BoardState methodsFor: 'error handling' stamp: 'cf 5/25/2019 15:51:29'!
+signalEmptyBoard
+	^self error self class errorEmptyBoard.! !
 
 !BoardState methodsFor: 'error handling' stamp: 'cf 5/25/2019 15:23:46'!
 signalGameIsOver
@@ -186,6 +231,14 @@ signalIsNotAValidPosition
 !BoardState methodsFor: 'error handling' stamp: 'cf 5/25/2019 13:36:45'!
 signalPlaceAlreadyTaken
 	^self error self class errorDeCasillaOcupada .! !
+
+!BoardState methodsFor: 'error handling' stamp: 'cf 5/25/2019 15:48:41'!
+signalTheBoardIsFull
+	^self error self class errorElTableroEstaLleno ! !
+
+!BoardState methodsFor: 'error handling' stamp: 'cf 5/25/2019 15:47:54'!
+signalXStartFirst
+	^ self error self class errorNoEsTuTurno ! !
 
 
 !BoardState methodsFor: 'boardsQuestions' stamp: 'cf 5/25/2019 13:39:14'!
@@ -206,6 +259,14 @@ BoardState class
 errorDeCasillaOcupada
 	^'La Casilla se encuentra ocupada.'! !
 
+!BoardState class methodsFor: 'errorSignals' stamp: 'cf 5/25/2019 15:46:57'!
+errorElTableroEstaLleno
+	^'No se pueden agregar más fichas'! !
+
+!BoardState class methodsFor: 'errorSignals' stamp: 'cf 5/25/2019 15:53:01'!
+errorEmptyBoard
+	^'El tablero esta vació'! !
+
 !BoardState class methodsFor: 'errorSignals' stamp: 'cf 5/25/2019 13:36:15'!
 errorFueraDeTablero
 	^'Pusiste la ficha fuera del tablero'! !
@@ -218,6 +279,10 @@ errorGameOver
 errorNoEsTuTurno
 	^'No es tu turno de jugar'! !
 
+!BoardState class methodsFor: 'errorSignals' stamp: 'cf 5/25/2019 16:01:43'!
+errorTheBoardIsNotFullYet
+	^'Todavía no esta lleno el tablero'.! !
+
 
 !classDefinition: #Full category: #Tateti!
 BoardState subclass: #Full
@@ -226,10 +291,41 @@ BoardState subclass: #Full
 	poolDictionaries: ''
 	category: 'Tateti'!
 
+!Full methodsFor: 'playing' stamp: 'cf 5/25/2019 15:49:05'!
+putOAt: aPosition
+	^self signalTheBoardIsFull ! !
 
-!Full methodsFor: 'playing' stamp: 'cf 5/25/2019 11:35:47'!
-putXAt: aPosition! !
+!Full methodsFor: 'playing' stamp: 'cf 5/25/2019 15:49:11'!
+putXAt: aPosition
+	^self signalTheBoardIsFull ! !
 
+!Full methodsFor: 'playing' stamp: 'cf 5/25/2019 15:43:47'!
+slideOFrom: aPosition to: newPosition ! !
+
+!Full methodsFor: 'playing' stamp: 'cf 5/25/2019 15:43:50'!
+slideXFrom: aPosition to: newPosition ! !
+
+
+!Full methodsFor: 'initialization' stamp: 'cf 5/25/2019 15:38:11'!
+playingWith: thisBoard next:next xposition: xpositions oposition:opositions WiningPosition: winingpositions .
+	board := thisBoard .
+	actualTurn := next .
+	xPositions := xpositions .
+	oPositions := opositions .
+	winingPositions := winingpositions .
+	winBy := 'none'.
+	! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'Full class' category: #Tateti!
+Full class
+	instanceVariableNames: ''!
+
+!Full class methodsFor: 'class creation' stamp: 'cf 5/25/2019 15:36:45'!
+withThisBoard: thisBoard nextTurn: next xpositions: xPositions opositions:oPositions andWiningPositions: winingPositions
+	^Full new playingWith: thisBoard next:next xposition: xPositions oposition:oPositions WiningPosition: winingPositions .
+	! !
 
 
 !classDefinition: #NotFull category: #Tateti!
@@ -239,7 +335,7 @@ BoardState subclass: #NotFull
 	poolDictionaries: ''
 	category: 'Tateti'!
 
-!NotFull methodsFor: 'playing' stamp: 'cf 5/25/2019 15:00:09'!
+!NotFull methodsFor: 'playing' stamp: 'cf 5/25/2019 15:34:01'!
 putOAt: aPosition
 	|positionHolder|
 	positionHolder := self quienOcupaLaPosision: aPosition .
@@ -247,7 +343,10 @@ putOAt: aPosition
 		[self signalPlaceAlreadyTaken]
 		 ifFalse: [ (board at: (aPosition x)) at: (aPosition y) put: $O.
 			oPositions add: aPosition.
-			( oPositions size =3) ifTrue: [ (winingPositions includes: oPositions) ifTrue: [^Winned by: 'O' withThisBoard: board andXPositions: xPositions  andOPositions: oPositions  andWiningPosition: winingPositions ]]. ]! !
+			( oPositions size =3) ifTrue: [ (winingPositions includes: oPositions) ifTrue:
+				 [^Winned by: 'O' withThisBoard: board andXPositions: xPositions  andOPositions: oPositions  andWiningPosition: winingPositions ]
+				ifFalse: [^Full  withThisBoard:board nextTurn: 'X' xpositions: xPositions opositions:oPositions andWiningPositions: winingPositions  ]
+				]. ]! !
 
 !NotFull methodsFor: 'playing' stamp: 'cf 5/25/2019 15:06:44'!
 putXAt: aPosition
@@ -258,6 +357,14 @@ putXAt: aPosition
 		 ifFalse: [ (board at: (aPosition x)) at: (aPosition y) put: $X.
 					xPositions add: aPosition.
 					( xPositions size =3) ifTrue: [ (winingPositions includes: xPositions) ifTrue: [^Winned by: 'X' withThisBoard: board andXPositions: xPositions  andOPositions: oPositions  andWiningPosition: winingPositions ]]. ]! !
+
+!NotFull methodsFor: 'playing' stamp: 'cf 5/25/2019 16:00:31'!
+slideOFrom: aPosition to: newPosition 
+	^self signalBoardIsNotFull.! !
+
+!NotFull methodsFor: 'playing' stamp: 'cf 5/25/2019 16:00:40'!
+slideXFrom: aPosition to: newPosition 
+	^self signalBoardIsNotFull.! !
 
 
 
@@ -298,13 +405,13 @@ putXAt: aPosition
 	(self checkIfValidPosition: aPosition) ifTrue: [ ^NotFull  with: winingPositions and: aPosition  with: board .]
 	 ifFalse: [self signalIsNotAValidPosition].! !
 
-!Started methodsFor: 'playing' stamp: 'cf 5/25/2019 12:01:28'!
-slideX: aPosition toNew:Position
-	! !
+!Started methodsFor: 'playing' stamp: 'cf 5/25/2019 15:53:16'!
+slideOFrom: aPosition to: newPosition 
+	^self signalEmptyBoard ! !
 
-!Started methodsFor: 'playing' stamp: 'cf 5/25/2019 12:01:24'!
-slideY: aPosition toNew:Position
-	! !
+!Started methodsFor: 'playing' stamp: 'cf 5/25/2019 15:51:54'!
+slideXFrom: aPosition to: newPosition 
+	^self signalEmptyBoard ! !
 
 
 !Started methodsFor: 'initialization' stamp: 'cf 5/25/2019 14:03:17'!
@@ -330,11 +437,6 @@ initialize
 	actualTurn := $X.
 	winBy := 'none'.! !
 
-
-!Started methodsFor: 'error handling' stamp: 'cf 5/25/2019 13:45:24'!
-signalXStartFirst
-	^ self error self class errorNoEsTuTurno ! !
-
 
 !classDefinition: #Winned category: #Tateti!
 BoardState subclass: #Winned
@@ -350,6 +452,12 @@ putOAt: aPosition
 !Winned methodsFor: 'playing' stamp: 'cf 5/25/2019 15:23:08'!
 putXAt: aPosition
 	^self signalGameIsOver ! !
+
+!Winned methodsFor: 'playing' stamp: 'cf 5/25/2019 15:44:28'!
+slideOFrom: aPosition to: newPosition ! !
+
+!Winned methodsFor: 'playing' stamp: 'cf 5/25/2019 15:44:31'!
+slideXFrom: aPosition to: newPosition ! !
 
 
 !Winned methodsFor: 'initialization' stamp: 'cf 5/25/2019 15:06:04'!
@@ -393,6 +501,14 @@ putOAt: aPosition
 putXAt: aPosition
 	board := board putXAt: aPosition .! !
 
+!TerniLapilli methodsFor: 'playing' stamp: 'cf 5/25/2019 15:42:15'!
+slidingO: aPosition destination: newPosition
+	board := board slideOFrom: aPosition to: newPosition .! !
+
+!TerniLapilli methodsFor: 'playing' stamp: 'cf 5/25/2019 15:42:36'!
+slidingX: aPosition destination: newPosition
+	board := board slideXFrom: aPosition to: newPosition .! !
+
 
 !TerniLapilli methodsFor: 'boardQuestions' stamp: 'cf 5/25/2019 12:20:01'!
 fichasDeO
@@ -417,21 +533,3 @@ ultimoMovimiento
 !TerniLapilli methodsFor: 'boardQuestions' stamp: 'cf 5/25/2019 14:05:57'!
 winBy
 	^board whoWins.! !
-
-"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
-
-!classDefinition: 'TerniLapilli class' category: #Tateti!
-TerniLapilli class
-	instanceVariableNames: ''!
-
-!TerniLapilli class methodsFor: 'errors' stamp: 'cf 5/20/2019 18:29:59'!
-errorDeCasillaOcupada
-	^'La Casilla se encuentra ocupada.'! !
-
-!TerniLapilli class methodsFor: 'errors' stamp: 'cf 5/20/2019 19:57:04'!
-errorFueraDeTablero
-	^'Pusiste la ficha fuera del tablero'! !
-
-!TerniLapilli class methodsFor: 'errors' stamp: 'cf 5/20/2019 18:56:19'!
-errorNoEsTuTurno
-	^'No es tu turno de jugar'! !
