@@ -204,8 +204,34 @@ test11NoSePuedenDeslizarPiezasDelRival
 		self assert: (tablero fichasDeX ) equals:3.
 		self assert: (tablero fichasDeO ) equals: 3.]! !
 
-!TestTerniLapilli methodsFor: 'test' stamp: 'cf 5/26/2019 11:46:12'!
-test12SePuedenDeslizarPiezasCorrectamente
+!TestTerniLapilli methodsFor: 'test' stamp: 'cf 5/26/2019 13:18:30'!
+test12NoSePuedeDeslizarUnaPiedraMuyLejos
+	|tablero firstMove secondMove thirdMove fourthMove fifthMove sixMove emptyLocation|
+		firstMove := 1@1.
+		secondMove := 1@2.
+		thirdMove := 2@1.
+		fourthMove := 2@2.
+		fifthMove := 3@2.
+		sixMove := 3@3.
+		emptyLocation := 1@3.
+		tablero := TerniLapilli new.
+		tablero putXAt: firstMove.
+		tablero putOAt: secondMove.
+		tablero putXAt: thirdMove .
+		tablero putOAt: fourthMove .
+		tablero putXAt: fifthMove .
+		tablero putOAt: sixMove .
+		self assert:  (tablero ultimoMovimiento) equals: 'X'. 
+		
+	self should: [tablero slideXFrom: sixMove to: emptyLocation ] raise:  Error 
+				withExceptionDo:[:anError | anError messageText = BoardState errorMovimientoInvalido . 
+		self  assert: (tablero ultimoMovimiento ) equals: 'X'.			
+		self assert: (tablero fichasEnJuego) equals: 6.
+		self assert: (tablero fichasDeX ) equals:3.
+		self assert: (tablero fichasDeO ) equals: 3.]! !
+
+!TestTerniLapilli methodsFor: 'test' stamp: 'cf 5/26/2019 13:16:18'!
+test13SePuedenDeslizarPiezasCorrectamente
 	|tablero firstMove secondMove thirdMove fourthMove fifthMove sixMove emptyLocation|
 		firstMove := 1@1.
 		secondMove := 1@2.
@@ -227,7 +253,8 @@ test12SePuedenDeslizarPiezasCorrectamente
 		self assert: (tablero fichasDeX ) equals:3.
 		self assert: (tablero fichasDeO ) equals: 3.
 		self assert: (tablero quienOcupaLaPosision:  emptyLocation ) equals: $X.
-		self assert: (tablero quienOcupaLaPosision:  fifthMove ) equals: nil.! !
+		self assert: (tablero quienOcupaLaPosision:  fifthMove ) equals: nil.
+		self assert: tablero winBy equals: 'X'.! !
 
 
 !classDefinition: #BoardState category: #Tateti!
@@ -295,6 +322,10 @@ signalGameIsOver
 signalIsNotAValidPosition
 	^self error self class errorFueraDeTablero ! !
 
+!BoardState methodsFor: 'error handling' stamp: 'cf 5/26/2019 13:12:36'!
+signalIsNotAvalidMove
+	^ self error self class errorMovimientoInvalido.! !
+
 !BoardState methodsFor: 'error handling' stamp: 'cf 5/26/2019 11:39:14'!
 signalIsNotYours 
 	^self error self class errorEsaPiezaNoTePertenece.! !
@@ -359,6 +390,10 @@ errorFueraDeTablero
 errorGameOver
 	^'This game is Over'.! !
 
+!BoardState class methodsFor: 'errorSignals' stamp: 'cf 5/26/2019 13:13:10'!
+errorMovimientoInvalido
+	^'El movimiento intentado es inválido'.! !
+
 !BoardState class methodsFor: 'errorSignals' stamp: 'cf 5/25/2019 13:36:25'!
 errorNoEsTuTurno
 	^'No es tu turno de jugar'! !
@@ -399,21 +434,9 @@ slide: aPosition to: newPosition from: player and: playerPositions .
 		]
 		ifFalse: [ self signalIsNotYours ]! !
 
-!Full methodsFor: 'playing' stamp: 'cf 5/26/2019 12:33:52'!
+!Full methodsFor: 'playing' stamp: 'cf 5/26/2019 12:45:48'!
 slideOFrom: aPosition to: newPosition 
-	( (self quienOcupaLaPosision: aPosition) = $O) ifTrue: [
-		|newPositionHolder|
-		newPositionHolder := self quienOcupaLaPosision: newPosition.
-		(self checkIfValidPosition: newPosition ) ifFalse: [ self signalIsNotAValidPosition ].
-		((newPositionHolder = nil) and: [ (self distanciaDe: aPosition a: newPosition) = 1]) ifTrue: [
-					self mover:aPosition a: newPosition de: 'O' .
-					( winingPositions includes: xPositions ) ifTrue: [ ^Winned by: 'O' withThisBoard: board andXPositions: xPositions  andOPositions: oPositions  andWiningPosition: 					winingPositions  ].
-			]ifFalse: [
-				self signalIsNotAvalidMove.
-			].
-		
-		]
-		ifFalse: [ self signalIsNotYours ]! !
+	^ self slide: aPosition to: newPosition from: 'O' and: oPositions .! !
 
 !Full methodsFor: 'playing' stamp: 'cf 5/26/2019 12:38:23'!
 slideXFrom: aPosition to: newPosition 
@@ -450,28 +473,28 @@ BoardState subclass: #NotFull
 	poolDictionaries: ''
 	category: 'Tateti'!
 
-!NotFull methodsFor: 'playing' stamp: 'cf 5/25/2019 15:34:01'!
-putOAt: aPosition
+!NotFull methodsFor: 'playing' stamp: 'cf 5/26/2019 13:08:37'!
+poner: player en: aPosition posicionesDelJugador: playerPositions 
 	|positionHolder|
 	positionHolder := self quienOcupaLaPosision: aPosition .
 	((positionHolder = $X) or:[ positionHolder = $O] ) ifTrue: 
 		[self signalPlaceAlreadyTaken]
-		 ifFalse: [ (board at: (aPosition x)) at: (aPosition y) put: $O.
-			oPositions add: aPosition.
-			( oPositions size =3) ifTrue: [ (winingPositions includes: oPositions) ifTrue:
-				 [^Winned by: 'O' withThisBoard: board andXPositions: xPositions  andOPositions: oPositions  andWiningPosition: winingPositions ]
-				ifFalse: [^Full  withThisBoard:board nextTurn: 'X' xpositions: xPositions opositions:oPositions andWiningPositions: winingPositions  ]
-				]. ]! !
+		 ifFalse: [ (board at: (aPosition x)) at: (aPosition y) put: player .
+					playerPositions add: aPosition.
+					(  playerPositions size =3) ifTrue: [ (winingPositions includes: playerPositions ) ifTrue: 
+						[^Winned by: (player asString ) withThisBoard: board andXPositions: xPositions  andOPositions: oPositions  andWiningPosition: winingPositions ].
+						(player = $O) ifTrue: [^Full  withThisBoard:board nextTurn: 'X' xpositions: xPositions opositions:oPositions andWiningPositions: winingPositions  ]
+							
+						]. ]! !
 
-!NotFull methodsFor: 'playing' stamp: 'cf 5/25/2019 15:06:44'!
+!NotFull methodsFor: 'playing' stamp: 'cf 5/26/2019 12:59:08'!
+putOAt: aPosition
+	^self poner: $O en: aPosition posicionesDelJugador: oPositions .! !
+
+!NotFull methodsFor: 'playing' stamp: 'cf 5/26/2019 12:59:12'!
 putXAt: aPosition
-	|positionHolder|
-	positionHolder := self quienOcupaLaPosision: aPosition .
-	((positionHolder = $X) or:[ positionHolder = $O] ) ifTrue: 
-		[self signalPlaceAlreadyTaken]
-		 ifFalse: [ (board at: (aPosition x)) at: (aPosition y) put: $X.
-					xPositions add: aPosition.
-					( xPositions size =3) ifTrue: [ (winingPositions includes: xPositions) ifTrue: [^Winned by: 'X' withThisBoard: board andXPositions: xPositions  andOPositions: oPositions  andWiningPosition: winingPositions ]]. ]! !
+	^self poner: $X en: aPosition posicionesDelJugador: xPositions .
+	! !
 
 !NotFull methodsFor: 'playing' stamp: 'cf 5/25/2019 16:00:31'!
 slideOFrom: aPosition to: newPosition 
@@ -480,7 +503,6 @@ slideOFrom: aPosition to: newPosition
 !NotFull methodsFor: 'playing' stamp: 'cf 5/25/2019 16:00:40'!
 slideXFrom: aPosition to: newPosition 
 	^self signalBoardIsNotFull.! !
-
 
 
 !NotFull methodsFor: 'initialization' stamp: 'cf 5/25/2019 14:03:37'!
@@ -590,7 +612,7 @@ whoWins: winner withThisBoard: thisBoard xPosition:xpositions oPosition: opositi
 Winned class
 	instanceVariableNames: ''!
 
-!Winned class methodsFor: 'class initialization' stamp: 'cf 5/25/2019 15:02:30'!
+!Winned class methodsFor: 'class initialization' stamp: 'cf 5/26/2019 13:11:00'!
 by: winner withThisBoard: board andXPositions: xpositions andOPositions: opositions andWiningPosition: winingpositions
 	^Winned new whoWins: winner withThisBoard: board xPosition:xpositions oPosition: opositions andWinningPositions: winingpositions .! !
 
