@@ -5,21 +5,21 @@ TestCase subclass: #PortfolioTest
 	poolDictionaries: ''
 	category: 'Portfolio-Ejercicio'!
 
-!PortfolioTest methodsFor: 'tests' stamp: 'j 5/25/2019 15:48:21'!
+!PortfolioTest methodsFor: 'tests' stamp: 'j 5/26/2019 20:37:55'!
 test01InitializeEmptyPortfolio
 
 	|portfolio|
 	
-	portfolio := Portflio new.
+	portfolio := Portfolio new.
 	
 	self assert: portfolio balance equals: 0. ! !
 
-!PortfolioTest methodsFor: 'tests' stamp: 'j 5/25/2019 16:44:04'!
+!PortfolioTest methodsFor: 'tests' stamp: 'j 5/26/2019 20:37:55'!
 test02PortfolioKnowsAddedAccounts
 
 	|portfolio account deposit withdraw |
 	
-	portfolio := Portflio new.
+	portfolio := Portfolio new.
 	
 	account := ReceptiveAccount new.
 	deposit := Deposit register: 100 on: account.
@@ -30,12 +30,12 @@ test02PortfolioKnowsAddedAccounts
 	self assert: portfolio portfolio size equals: 1.
 	self assert: (portfolio portfolio includes: account).! !
 
-!PortfolioTest methodsFor: 'tests' stamp: 'j 5/25/2019 17:24:26'!
+!PortfolioTest methodsFor: 'tests' stamp: 'j 5/26/2019 20:37:55'!
 test03PortfolioKnowsAllTransactions
 
 	|portfolio account deposit withdraw |
 	
-	portfolio := Portflio new.
+	portfolio := Portfolio new.
 	
 	account := ReceptiveAccount new.
 	deposit := Deposit register: 100 on: account.
@@ -44,6 +44,119 @@ test03PortfolioKnowsAllTransactions
 		
 	self assert: (portfolio transactions includes: deposit).
 	self assert: (portfolio transactions includes: withdraw).! !
+
+!PortfolioTest methodsFor: 'tests' stamp: 'j 5/26/2019 20:37:55'!
+test04PortfolioKnowsIfOneOfItsAccountsMadeTransactions
+
+	|portfolio account account2 deposit |
+	
+	portfolio := Portfolio new.
+	
+	account := ReceptiveAccount new.
+	account2 := ReceptiveAccount new.
+	deposit := Deposit register: 100 on: account.
+	portfolio addAccount: account .
+	
+		
+	self assert: (portfolio hasRegistered: account).
+	self deny: (portfolio hasRegistered: account2).
+	! !
+
+!PortfolioTest methodsFor: 'tests' stamp: 'j 5/26/2019 20:37:55'!
+test05APortfolioKnowsItsParentPortfolios
+
+	|portfolioRoot portfolio2a portfolio2b portfolio3 |
+	
+	portfolioRoot := Portfolio new.
+	portfolio2a := Portfolio new.
+	portfolio2b := Portfolio new.
+	portfolio3 := Portfolio new.
+	
+	portfolioRoot addPortfolio: portfolio2a.
+	portfolioRoot addPortfolio: portfolio2b. 
+	portfolio2a  addPortfolio: portfolio3.
+	portfolio2b  addPortfolio: portfolio3.
+	
+		
+	self assert: (portfolio2a parentPortfolios includes: portfolioRoot).
+	self assert: (portfolio2b parentPortfolios includes: portfolioRoot).
+	
+	self assert: (portfolio3 parentPortfolios includes: portfolio2a ).
+	self assert: (portfolio3 parentPortfolios includes: portfolio2b ).
+	 
+	
+	! !
+
+!PortfolioTest methodsFor: 'tests' stamp: 'j 5/26/2019 21:50:22'!
+test06CantAddAPortfolioToAnotherOneIfTheyShareAccounts
+
+	|portfolioRoot portfolio2 account |
+	
+	portfolioRoot := Portfolio new.
+	portfolio2 := Portfolio new.
+	account := ReceptiveAccount new.
+	
+	portfolioRoot addAccount: account .
+	portfolio2 addAccount: account .
+	
+	self
+		should: [portfolioRoot addPortfolio: portfolio2]
+		raise: Error
+		withExceptionDo: [:anError | 
+			self assert: anError messageText equals: Portfolio accountsAreSharedExceptionMessage].! !
+
+!PortfolioTest methodsFor: 'tests' stamp: 'j 5/26/2019 21:43:46'!
+test07CantAddAPortfolioToHierarchyOfPortfoliosInWhichAccountsWouldBeRepeated
+
+	|portfolioRoot portfolio2 portfolio3 portfolio4 account |
+	
+	portfolioRoot := Portfolio new.
+	portfolio2 := Portfolio new.
+	portfolio3 := Portfolio new.
+	portfolio4 := Portfolio new.
+	
+	account := ReceptiveAccount new.
+	
+	portfolioRoot addPortfolio: portfolio2.
+	portfolioRoot addPortfolio: portfolio3.
+	
+	portfolio2 addAccount: account.
+	portfolio4 addAccount: account.
+	
+	
+	self
+		should: [portfolio3 addPortfolio: portfolio4]
+		raise: Error
+		withExceptionDo: [:anError | 
+			self assert: anError messageText equals: Portfolio accountsAreSharedExceptionMessage].
+	! !
+
+!PortfolioTest methodsFor: 'tests' stamp: 'j 5/26/2019 22:11:25'!
+test08CantAddAnAccountToHierarchyOfPortfoliosInWhichAccountWouldBeRepeated
+
+	|portfolioRoot portfolio2 portfolio3 portfolio4 account |
+	
+	portfolioRoot := Portfolio new.
+	portfolio2 := Portfolio new.
+	portfolio3 := Portfolio new.
+	portfolio4 := Portfolio new.
+	
+	account := ReceptiveAccount new.
+	
+	portfolioRoot addPortfolio: portfolio2.
+	portfolioRoot addPortfolio: portfolio3.
+	portfolio3 addPortfolio: portfolio4.
+	
+	
+	portfolio2 addAccount: account.
+	
+	
+	self
+		should: [portfolio4 addAccount: account.]
+		raise: Error
+		withExceptionDo: [:anError | 
+			self assert: anError messageText equals: Portfolio accountsAreSharedExceptionMessage].
+	! !
 
 
 !classDefinition: #ReceptiveAccountTest category: #'Portfolio-Ejercicio'!
@@ -236,45 +349,181 @@ for: aValue
 	^ self new initializeFor: aValue ! !
 
 
-!classDefinition: #Portflio category: #'Portfolio-Ejercicio'!
-Object subclass: #Portflio
+!classDefinition: #Portfolio category: #'Portfolio-Ejercicio'!
+Object subclass: #Portfolio
 	instanceVariableNames: 'parentPortfolios portfolio'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Portfolio-Ejercicio'!
 
-!Portflio methodsFor: 'as yet unclassified' stamp: 'j 5/25/2019 15:37:04'!
-initialize
-
-	parentPortfolios := OrderedCollection new.
-	portfolio := OrderedCollection new.
-	! !
-
-
-!Portflio methodsFor: 'operations' stamp: 'j 5/25/2019 16:42:19'!
+!Portfolio methodsFor: 'operations' stamp: 'j 5/26/2019 21:58:38'!
 addAccount: aReceptiveAccount 
-	portfolio add: aReceptiveAccount ! !
 
-!Portflio methodsFor: 'operations' stamp: 'j 5/25/2019 15:55:38'!
+	(self isItValidToAddAccount: aReceptiveAccount ) 
+		ifTrue: [portfolio add: aReceptiveAccount ] 
+		
+		ifFalse: [^self error: self class accountsAreSharedExceptionMessage ]! !
+
+!Portfolio methodsFor: 'operations' stamp: 'j 5/26/2019 19:38:09'!
+addParentPortfolio: aParent
+
+	parentPortfolios add: aParent.! !
+
+!Portfolio methodsFor: 'operations' stamp: 'j 5/26/2019 21:34:22'!
+addPortfolio: aPortfolio 
+
+	(self isItValidToAdd: aPortfolio) 
+		ifTrue: [portfolio add: aPortfolio.
+				aPortfolio addParentPortfolio: self] 
+		
+		ifFalse: [^self error: self class accountsAreSharedExceptionMessage ]
+		
+		! !
+
+!Portfolio methodsFor: 'operations' stamp: 'j 5/25/2019 15:55:38'!
 balance
 	
 	^portfolio sum: [:anElement | anElement balance ] ifEmpty: [0].! !
 
-!Portflio methodsFor: 'operations' stamp: 'j 5/25/2019 16:43:45'!
+!Portfolio methodsFor: 'operations' stamp: 'j 5/26/2019 18:55:52'!
+hasRegistered: anAccount
+
+	(anAccount transactions size = 0) ifTrue: [^false] ifFalse: [^true]. 
+
+	 
+	! !
+
+!Portfolio methodsFor: 'operations' stamp: 'j 5/26/2019 19:26:01'!
+parentPortfolios
+
+	^parentPortfolios! !
+
+!Portfolio methodsFor: 'operations' stamp: 'j 5/25/2019 16:43:45'!
 portfolio
 	
 	^portfolio copy! !
 
-!Portflio methodsFor: 'operations' stamp: 'j 5/25/2019 17:22:10'!
+!Portfolio methodsFor: 'operations' stamp: 'j 5/26/2019 18:34:49'!
 transactions
 	
 	|allTransactions|
 	
 	allTransactions := OrderedCollection new.
 	
-	[:anAccount | allTransactions add: (anAccount transactions) ] value: portfolio.
+	portfolio do: [:anAccount | allTransactions addAllFirst: (anAccount transactions) ].
 	
-	^allTransactions .! !
+	^allTransactions copy.! !
+
+
+!Portfolio methodsFor: 'privateOperations' stamp: 'j 5/26/2019 20:31:53'!
+allAccounts
+	
+	|allAccounts|
+	
+	allAccounts  := OrderedCollection new.
+	
+	portfolio do: [:element | 
+			(element isKindOf: ReceptiveAccount) 
+				ifTrue: [allAccounts add: element ]  
+				ifFalse: [allAccounts addAllLast: (element allAccounts)]
+		].
+	
+	^allAccounts .
+		
+		! !
+
+!Portfolio methodsFor: 'privateOperations' stamp: 'j 5/26/2019 22:08:50'!
+containsAccount: anAccount
+
+	(self allAccounts includes: anAccount) ifTrue: [^true].
+	^false.! !
+
+!Portfolio methodsFor: 'privateOperations' stamp: 'j 5/26/2019 21:31:28'!
+findAllRootPortfolios
+
+	|rootPortfolio|
+	
+	rootPortfolio := OrderedCollection new.
+	
+	self parentPortfolios do: [:aParent | 
+		(aParent isRoot) 
+			ifTrue: [rootPortfolio add: aParent]
+			ifFalse: [rootPortfolio addAllFirst:  aParent findAllRootPortfolios ]
+		].
+	
+	^rootPortfolio 
+	
+	! !
+
+!Portfolio methodsFor: 'privateOperations' stamp: 'j 5/26/2019 21:50:08'!
+isItValidToAdd: aPortfolio
+		
+		|rootPortfolios|
+		
+		(self sharesAccountsWith: aPortfolio) ifTrue: [^false].
+		
+		rootPortfolios := self findAllRootPortfolios.
+		
+		rootPortfolios do: [:aRoot | 
+			(aRoot sharesAccountsWith: aPortfolio)
+					ifTrue: [^false] 
+			].
+		
+		
+		
+		^true.
+! !
+
+!Portfolio methodsFor: 'privateOperations' stamp: 'j 5/26/2019 22:10:03'!
+isItValidToAddAccount: anAccount
+		
+		|rootPortfolios|
+		
+		(self containsAccount: anAccount ) ifTrue: [^false].
+		
+		rootPortfolios := self findAllRootPortfolios.
+		
+		rootPortfolios do: [:aRoot | 
+			((aRoot allAccounts) includes: anAccount)
+					ifTrue: [^false] 
+			].
+		
+		^true.
+! !
+
+!Portfolio methodsFor: 'privateOperations' stamp: 'j 5/26/2019 21:23:54'!
+isRoot
+
+	(parentPortfolios size = 0) ifTrue: [^true].
+	^false
+	
+	! !
+
+!Portfolio methodsFor: 'privateOperations' stamp: 'j 5/26/2019 21:14:41'!
+sharesAccountsWith: aPortfolio
+		
+		aPortfolio allAccounts do: [:account | (self allAccounts includes: account) ifTrue: [^true]].
+		
+		^false.! !
+
+
+!Portfolio methodsFor: 'initialization' stamp: 'j 5/25/2019 15:37:04'!
+initialize
+
+	parentPortfolios := OrderedCollection new.
+	portfolio := OrderedCollection new.
+	! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'Portfolio class' category: #'Portfolio-Ejercicio'!
+Portfolio class
+	instanceVariableNames: ''!
+
+!Portfolio class methodsFor: 'as yet unclassified' stamp: 'j 5/26/2019 19:54:59'!
+accountsAreSharedExceptionMessage
+
+	^'You cant add this Portfolio because it has accounts that already belong to this one.'! !
 
 
 !classDefinition: #ReceptiveAccount category: #'Portfolio-Ejercicio'!
