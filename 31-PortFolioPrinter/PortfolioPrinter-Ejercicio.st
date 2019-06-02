@@ -289,6 +289,47 @@ test10AnAccountCantMakeTransferWithInsufficentFounds
 				self assert: (reciverAccount balance)  equals: 0.
 		]! !
 
+!ReceptiveAccountTest methodsFor: 'test Transactions Between Two Accounts' stamp: 'cf 6/2/2019 16:22:20'!
+test11AnAccountAnswerHisTransactionsInAnAccountSummaryCorrectly
+	| emisorAccount reciverAccount deposit transferWithdraw reportOfEmisorAccount reportOfReciverAccount  |
+	
+	emisorAccount := ReceptiveAccount new.
+	reciverAccount := ReceptiveAccount new.
+	deposit := Deposit register: 100 on: emisorAccount.
+	transferWithdraw := TransferWithdraw from: reciverAccount to: emisorAccount  for: 50.
+	reportOfEmisorAccount := ( emisorAccount accountSummary) reset .
+	reportOfReciverAccount := (reciverAccount accountSummary ) reset.
+	self assert: (emisorAccount balance)  equals: 50.
+	self assert: (reciverAccount balance)  equals: 50.
+	self assert: (emisorAccount hasRegistered: deposit).
+	self assert: (emisorAccount hasRegistered: transferWithdraw).
+	self assert: 'Depósito por 100.' equals: (reportOfEmisorAccount nextLine ).
+	self assert: 'Salida por transferencia de 50.' equals: (reportOfEmisorAccount nextLine ).
+	self assert: 'Balance = 50.' equals: (reportOfEmisorAccount nextLine ).
+	self assert: reportOfEmisorAccount atEnd .
+	self assert: 'Entrada por transferencia de 50.' equals: (reportOfReciverAccount nextLine ).
+	self assert: 'Balance = 50.' equals: (reportOfReciverAccount nextLine ).
+	self assert: reportOfReciverAccount atEnd .
+	
+	! !
+
+!ReceptiveAccountTest methodsFor: 'test Transactions Between Two Accounts' stamp: 'cf 6/2/2019 16:39:41'!
+test12AnAccountAnswerHisTransferNetCorrectly
+	| emisorAccount reciverAccount deposit transferWithdraw  |
+	
+	emisorAccount := ReceptiveAccount new.
+	reciverAccount := ReceptiveAccount new.
+	deposit := Deposit register: 100 on: emisorAccount.
+	transferWithdraw := TransferWithdraw from: reciverAccount to: emisorAccount  for: 50.
+	self assert: (emisorAccount balance)  equals: 50.
+	self assert: (reciverAccount balance)  equals: 50.
+	self assert: (emisorAccount hasRegistered: deposit).
+	self assert: (emisorAccount hasRegistered: transferWithdraw).
+	self assert: (emisorAccount transferNet ) equals: (-50).
+	self assert: (reciverAccount transferNet ) equals: (50).	
+	
+	! !
+
 
 !classDefinition: #AccountTransaction category: #'PortfolioPrinter-Ejercicio'!
 Object subclass: #AccountTransaction
@@ -382,7 +423,7 @@ value
 Transfers class
 	instanceVariableNames: ''!
 
-!Transfers class methodsFor: 'instance creation' stamp: 'cf 6/1/2019 14:11:23'!
+!Transfers class methodsFor: 'instance creation' stamp: 'cf 6/2/2019 16:33:11'!
 from: firstAcount to: secondAcount  for: transferAmount
 	| transaction secondTransaction|
 	(self checkIfAccountsHaveFounds:firstAcount and: secondAcount with: transferAmount )ifTrue:[ ^self signalTransactionError.].
@@ -390,9 +431,10 @@ from: firstAcount to: secondAcount  for: transferAmount
 	secondTransaction := self for: transferAmount .
 	firstAcount register: transaction.
 	secondAcount register: secondTransaction .
-	
 	self selfRegisterOnReport: firstAcount for: transferAmount .
 	self anotherSeflRegisterOnReport: secondAcount for: transferAmount .
+	firstAcount registerTransfer: transaction.
+	secondAcount registerTransfer: secondTransaction .
 	^secondTransaction ! !
 
 
@@ -740,17 +782,18 @@ accountsAreSharedExceptionMessage
 
 !classDefinition: #ReceptiveAccount category: #'PortfolioPrinter-Ejercicio'!
 Object subclass: #ReceptiveAccount
-	instanceVariableNames: 'transactions reportTransactions'
+	instanceVariableNames: 'transactions accountSummary transferNetBalance'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'PortfolioPrinter-Ejercicio'!
 
-!ReceptiveAccount methodsFor: 'initialization' stamp: 'cf 6/1/2019 10:39:39'!
+!ReceptiveAccount methodsFor: 'initialization' stamp: 'cf 6/2/2019 16:37:28'!
 initialize
 
 	super initialize.
 	transactions := OrderedCollection new.
-	reportTransactions := ReadWriteStream on: String new! !
+	accountSummary := ReadWriteStream on: String new.
+	transferNetBalance := OrderedCollection new.! !
 
 
 !ReceptiveAccount methodsFor: 'transactions' stamp: 'HernanWilkinson 7/13/2011 18:37'!
@@ -758,6 +801,10 @@ register: aTransaction
 
 	transactions add: aTransaction 
 ! !
+
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'cf 6/2/2019 16:35:03'!
+registerTransfer: aTransferWithdraw 
+	transferNetBalance add: aTransferWithdraw ! !
 
 !ReceptiveAccount methodsFor: 'transactions' stamp: 'HernanWilkinson 7/13/2011 18:37'!
 transactions 
@@ -778,22 +825,36 @@ hasRegistered: aTtransaction
 ! !
 
 
-!ReceptiveAccount methodsFor: 'Report' stamp: 'cf 6/1/2019 13:04:44'!
+!ReceptiveAccount methodsFor: 'Report' stamp: 'cf 6/2/2019 15:50:40'!
+accountSummary
+	|report|
+	
+	report := accountSummary .
+	
+	report nextPutAll: 'Balance = ', (self balance asString ), '.'.
+	
+	^report .! !
+
+!ReceptiveAccount methodsFor: 'Report' stamp: 'cf 6/2/2019 15:45:12'!
 registerATransferDepositFor: aDepositAmount
-	reportTransactions nextPutAll: 'Entrada por transferencia de ', (aDepositAmount asString ), '.'.
-	reportTransactions newLine .! !
+	accountSummary nextPutAll: 'Entrada por transferencia de ', (aDepositAmount asString ), '.'.
+	accountSummary newLine .! !
 
-!ReceptiveAccount methodsFor: 'Report' stamp: 'cf 6/1/2019 12:40:10'!
+!ReceptiveAccount methodsFor: 'Report' stamp: 'cf 6/2/2019 15:45:12'!
 registerATransferWithdrawFor: transferWithdrawAmount 
-	reportTransactions nextPutAll: 'Salida por transferencia de ', (transferWithdrawAmount asString ), '.'.
-	reportTransactions newLine.! !
+	accountSummary nextPutAll: 'Salida por transferencia de ', (transferWithdrawAmount asString ), '.'.
+	accountSummary newLine.! !
 
-!ReceptiveAccount methodsFor: 'Report' stamp: 'cf 6/1/2019 11:22:49'!
+!ReceptiveAccount methodsFor: 'Report' stamp: 'cf 6/2/2019 15:45:12'!
 registerAWithdrawFor: withdrawAmount 
-	reportTransactions nextPutAll: 'Extracción por ', (withdrawAmount asString ), '.'.
-	reportTransactions newLine .! !
+	accountSummary nextPutAll: 'Extracción por ', (withdrawAmount asString ), '.'.
+	accountSummary newLine .! !
 
-!ReceptiveAccount methodsFor: 'Report' stamp: 'cf 6/1/2019 11:19:58'!
+!ReceptiveAccount methodsFor: 'Report' stamp: 'cf 6/2/2019 15:45:12'!
 reportDepositFor: depositAmount 
-	reportTransactions nextPutAll: 'Depósito por ', (depositAmount asString ) , '.'.
-	reportTransactions newLine .! !
+	accountSummary nextPutAll: 'Depósito por ', (depositAmount asString ) , '.'.
+	accountSummary newLine .! !
+
+!ReceptiveAccount methodsFor: 'Report' stamp: 'cf 6/2/2019 16:28:40'!
+transferNet
+		^transferNetBalance sum: [ :aTransaction | aTransaction transactionalValue ] ifEmpty: [ 0 ]! !
