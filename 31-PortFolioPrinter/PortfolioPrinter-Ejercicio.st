@@ -277,20 +277,8 @@ test09AnAccountCanWithdrawToAnotherAccount
 	self assert: (emisorAccount hasRegistered: deposit).
 	self assert: (emisorAccount hasRegistered: transferWithdraw).! !
 
-!ReceptiveAccountTest methodsFor: 'test Transactions Between Two Accounts' stamp: 'cf 6/1/2019 14:18:58'!
-test10AnAccountCantMakeTransferWithInsufficentFounds
-	| emisorAccount reciverAccount  |
-	
-	emisorAccount := ReceptiveAccount new.
-	reciverAccount := ReceptiveAccount new.
-	self should: [TransferWithdraw from: reciverAccount to: emisorAccount  for: 50. ] raise:  Error 
-			withExceptionDo:[:anError | anError messageText = Transfers errorFondosInsuficientes . 
-				self assert: (emisorAccount balance)  equals: 0.
-				self assert: (reciverAccount balance)  equals: 0.
-		]! !
-
-!ReceptiveAccountTest methodsFor: 'test Transactions Between Two Accounts' stamp: 'cf 6/2/2019 16:22:20'!
-test11AnAccountAnswerHisTransactionsInAnAccountSummaryCorrectly
+!ReceptiveAccountTest methodsFor: 'test Transactions Between Two Accounts' stamp: 'cf 6/2/2019 21:33:05'!
+test10AnAccountAnswerHisTransactionsInAnAccountSummaryCorrectly
 	| emisorAccount reciverAccount deposit transferWithdraw reportOfEmisorAccount reportOfReciverAccount  |
 	
 	emisorAccount := ReceptiveAccount new.
@@ -313,8 +301,8 @@ test11AnAccountAnswerHisTransactionsInAnAccountSummaryCorrectly
 	
 	! !
 
-!ReceptiveAccountTest methodsFor: 'test Transactions Between Two Accounts' stamp: 'cf 6/2/2019 16:39:41'!
-test12AnAccountAnswerHisTransferNetCorrectly
+!ReceptiveAccountTest methodsFor: 'test Transactions Between Two Accounts' stamp: 'cf 6/2/2019 21:33:13'!
+test11AnAccountAnswerHisTransferNetCorrectly
 	| emisorAccount reciverAccount deposit transferWithdraw  |
 	
 	emisorAccount := ReceptiveAccount new.
@@ -423,10 +411,9 @@ value
 Transfers class
 	instanceVariableNames: ''!
 
-!Transfers class methodsFor: 'instance creation' stamp: 'cf 6/2/2019 16:33:11'!
+!Transfers class methodsFor: 'instance creation' stamp: 'cf 6/2/2019 21:32:25'!
 from: firstAcount to: secondAcount  for: transferAmount
 	| transaction secondTransaction|
-	(self checkIfAccountsHaveFounds:firstAcount and: secondAcount with: transferAmount )ifTrue:[ ^self signalTransactionError.].
 	transaction := self anotherselffor: transferAmount .
 	secondTransaction := self for: transferAmount .
 	firstAcount register: transaction.
@@ -441,14 +428,6 @@ from: firstAcount to: secondAcount  for: transferAmount
 !Transfers class methodsFor: 'error handling' stamp: 'cf 6/1/2019 14:02:01'!
 checkIfAccountsHaveFounds: aReceptiveAccount and: aReceptiveAccount2 with: aSmallInteger 
 	self subclassResponsibility ! !
-
-!Transfers class methodsFor: 'error handling' stamp: 'cf 6/1/2019 14:07:54'!
-errorFondosInsuficientes
-	^'La Cuenta No tiene Fondos como para efectuar la transacción.'! !
-
-!Transfers class methodsFor: 'error handling' stamp: 'cf 6/1/2019 14:16:39'!
-signalTransactionError
-	^self error self errorFondosInsuficientes.! !
 
 
 !classDefinition: #TransferDeposit category: #'PortfolioPrinter-Ejercicio'!
