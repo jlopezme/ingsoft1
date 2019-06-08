@@ -1,140 +1,263 @@
-!classDefinition: #CarritoTest category: #TusLibros!
-TestCase subclass: #CarritoTest
+!classDefinition: #CartTest category: #TusLibros!
+TestCase subclass: #CartTest
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!CarritoTest methodsFor: 'as yet unclassified' stamp: 'j 6/3/2019 13:30:45'!
-test01CreateCartCreatesAValidCart
+!CartTest methodsFor: 'tests' stamp: 'HernanWilkinson 6/17/2013 17:08'!
+test01NewCartsAreCreatedEmpty
 
-	|carrito catalogoVacio listado|
-	
-	
-	catalogoVacio  := OrderedCollection new.
-	carrito := Carrito with: catalogoVacio .
-	
-	listado := (carrito listCart) reset .
-	
-	self assert: '0' equals: listado nextLine.
-! !
+	self assert: self createCart isEmpty! !
 
-!CarritoTest methodsFor: 'as yet unclassified' stamp: 'j 6/3/2019 13:53:02'!
-test02AddingItemsToCartAddsTheItems
+!CartTest methodsFor: 'tests' stamp: 'cf 6/8/2019 10:20:13'!
+test02CanNotAddItemsThatDoNotBelongToStore
 
-	|carrito catalogo listado|
+	| cart |
 	
+	cart := self createCart.
 	
-	catalogo  := Dictionary new.
-	catalogo at: 'Dune' put: 10.    
-	carrito := Carrito with: catalogo.
-	
-	carrito addItem: 'Dune' andHisCuantity: 1. 
-	
-	listado := (carrito listCart) reset.
-	
-	self assert: '0|Dune|1' equals: listado nextLine.
-! !
+	self 
+		should: [ cart add: 1 of: 'Cuchillo' ]
+		raise: Error - MessageNotUnderstood
+		withExceptionDo: [ :anError |
+			self assert: anError messageText = cart invalidItemErrorMessage.
+			self assert: cart isEmpty ]! !
 
-!CarritoTest methodsFor: 'as yet unclassified' stamp: 'j 6/3/2019 14:10:50'!
-test03AddingNegativeItemsToCartIsNotAllowed
+!CartTest methodsFor: 'tests' stamp: 'cf 6/8/2019 10:20:33'!
+test03AfterAddingAnItemTheCartIsNotEmptyAnymore
 
-	|carrito catalogo|
+	| cart |
 	
+	cart := self createCart.
 	
-	catalogo  := Dictionary new.
-	catalogo at: 'Dune' put: 10.    
-	carrito := Carrito with: catalogo.
-	
-	
-	
-	self
-		should: [carrito addItem: 'Dune' andHisCuantity: -1.]
-		raise: Error
-		withExceptionDo: [:anError | 
-			self assert: anError messageText equals: Carrito errorCantidadInvalida ].! !
+	cart add: 1 of: 'Pelota' .
+	self deny: cart isEmpty ! !
 
-!CarritoTest methodsFor: 'as yet unclassified' stamp: 'j 6/3/2019 14:10:33'!
-test04AddingInvalidItemsToCartIsNotAllowed
+!CartTest methodsFor: 'tests' stamp: 'cf 6/8/2019 10:20:53'!
+test04CanNotAddNonPositiveNumberOfItems
 
-	|carrito catalogo|
+	| cart |
 	
+	cart := self createCart.
 	
-	catalogo  := Dictionary new.
-	catalogo at: 'Dune' put: 10.    
-	carrito := Carrito with: catalogo.
+	self 
+		should: [cart add: 0 of: 'Pelota' .]
+		raise: Error - MessageNotUnderstood
+		withExceptionDo: [ :anError |
+			self assert: anError messageText = cart invalidQuantityErrorMessage.
+			self assert: cart isEmpty ]! !
+
+!CartTest methodsFor: 'tests' stamp: 'cf 6/8/2019 09:59:08'!
+test05CanNotAddMoreThanOneItemNotSellByTheStore
+
+	| cart |
 	
+	cart := self createCart.
 	
+	self 
+		should: [cart add: 2 of: 'Cuchillo'  ]
+		raise: Error - MessageNotUnderstood
+		withExceptionDo: [ :anError |
+			self assert: anError messageText = cart invalidItemErrorMessage.
+			self assert: cart isEmpty ]! !
+
+!CartTest methodsFor: 'tests' stamp: 'cf 6/8/2019 10:21:09'!
+test06CartRemembersAddedItems
+
+	| cart |
 	
-	self
-		should: [carrito addItem: 'Neuromancer' andHisCuantity: 1.]
-		raise: Error
-		withExceptionDo: [:anError | 
-			self assert: anError messageText equals: Carrito errorItemNoPerteneceAlCatalogo ].! !
+	cart := self createCart.
+	
+	cart add: 1 of: 'Pelota' .
+	self assert: (cart includes: 'Pelota')! !
+
+!CartTest methodsFor: 'tests' stamp: 'cf 6/8/2019 10:00:19'!
+test07CartDoesNotHoldNotAddedItems
+
+	| cart |
+	
+	cart := self createCart.
+	
+	self deny: (cart includes: 'Pelota')! !
+
+!CartTest methodsFor: 'tests' stamp: 'cf 6/8/2019 10:00:33'!
+test08CartRemembersTheNumberOfAddedItems
+
+	| cart |
+	
+	cart := self createCart.
+	
+	cart add: 2 of: 'Pelota'.
+	self assert: (cart occurrencesOf: 'Pelota') = 2! !
+
+!CartTest methodsFor: 'tests' stamp: 'cf 6/8/2019 09:28:56'!
+test09YouCantCreateACartWithAnEmptyCatalog
+
+	| cart anEmptyCatalog |
+	
+	anEmptyCatalog := Dictionary new.
+	self 
+		should: [ cart := Cart acceptingItemsOf: anEmptyCatalog ]
+		raise: Error 
+		withExceptionDo: [ :anError |
+			self assert: anError messageText  = Cart errorCatalogoVacio .]! !
+
+!CartTest methodsFor: 'tests' stamp: 'cf 6/8/2019 10:34:38'!
+test10TicketShowTheCorrectAmountOfAddingItems
+	| cart ticket  |
+	
+	cart := self createCart .
+	cart add: 3 of: 'Pelota' .
+	ticket := cart listOfBoughtItems.
+	self assert: (ticket nextLine ) equals: 'Pelota'.
+	self assert: (ticket nextLine ) equals: '3'.! !
+
+!CartTest methodsFor: 'tests' stamp: 'cf 6/8/2019 11:22:14'!
+test11CheckoutEmitACorrectTicket
+	| cart ticket  |
+	
+	cart := self createCart .
+	cart add: 3 of: 'Pelota' .
+	ticket := cart checkOutCart.
+	self assert: (ticket nextLine ) equals: 'Pelota'.
+	self assert: (ticket nextLine ) equals: '3'.
+	self assert: (ticket nextLine ) equals: '9 pesos'.! !
+
+
+!CartTest methodsFor: 'support' stamp: 'cf 6/8/2019 09:55:23'!
+createCart
+	
+	^Cart acceptingItemsOf: self createCatalogWithProducts ! !
+
+!CartTest methodsFor: 'support' stamp: 'cf 6/8/2019 09:58:00'!
+createCatalogWithProducts
+		|catalog|
+		catalog := Dictionary new.
+		catalog at: 'Pelota' put: (3 * peso ).
+		catalog at: 'Goma' put: (4 * peso).
+		^catalog ! !
 
 
-!classDefinition: #Carrito category: #TusLibros!
-Object subclass: #Carrito
-	instanceVariableNames: 'catalogo itemcontent listCart totalAmount'
+!classDefinition: #Cart category: #TusLibros!
+Object subclass: #Cart
+	instanceVariableNames: 'catalog items'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!Carrito methodsFor: 'signals' stamp: 'j 6/3/2019 14:08:51'!
-signalIsNotAValidItem
-	^self error: self class errorItemNoPerteneceAlCatalogo.! !
+!Cart methodsFor: 'error messages' stamp: 'HernanWilkinson 6/17/2013 17:45'!
+invalidItemErrorMessage
+	
+	^'Item is not in catalog'! !
 
-!Carrito methodsFor: 'signals' stamp: 'j 6/3/2019 14:08:55'!
-signalNotAValidCuantity
-	^self error: self class errorCantidadInvalida.! !
+!Cart methodsFor: 'error messages' stamp: 'HernanWilkinson 6/17/2013 17:45'!
+invalidQuantityErrorMessage
+	
+	^'Invalid number of items'! !
+
+!Cart methodsFor: 'error messages' stamp: 'cf 6/8/2019 09:22:52'!
+signalEmptyCatalouge
+	^self error: Cart errorCatalogoVacio.! !
 
 
-!Carrito methodsFor: 'Operations' stamp: 'j 6/3/2019 14:07:37'!
-addItem: anItem andHisCuantity: cuantity
-	( cuantity < 1) ifTrue: [ ^self signalNotAValidCuantity ].
-	( catalogo includesKey: anItem ) ifTrue: [ itemcontent add: anItem withOccurrences: cuantity.
-										     listCart nextPutAll: '|' ,anItem , '|', (cuantity asString).
-											totalAmount := totalAmount + ((catalogo at: anItem )*cuantity )] 
-									   ifFalse:[ ^self signalIsNotAValidItem.
-			]! !
+!Cart methodsFor: 'assertions' stamp: 'cf 6/8/2019 09:54:07'!
+assertIsValidItem: anItem
 
-!Carrito methodsFor: 'Operations' stamp: 'cf 6/2/2019 22:12:16'!
-listCart
-	^listCart 
+	(catalog includesKey: anItem) ifFalse: [ self error: self invalidItemErrorMessage ]! !
+
+!Cart methodsFor: 'assertions' stamp: 'HernanWilkinson 6/17/2013 17:51'!
+assertIsValidQuantity: aQuantity
+
+	aQuantity strictlyPositive ifFalse: [ self error: self invalidQuantityErrorMessage ]! !
+
+
+!Cart methodsFor: 'initialization' stamp: 'cf 6/8/2019 10:36:13'!
+initializeAcceptingItemsOf: aCatalog
+
+	catalog := aCatalog.
+	items := Dictionary new.! !
+
+
+!Cart methodsFor: 'queries' stamp: 'cf 6/8/2019 11:29:30'!
+checkOutCart
+	| listshop |
+	
+	listshop := self listOfBoughtItems.
+	self makeTicketIn: listshop  .
+	^listshop 												
 	! !
 
+!Cart methodsFor: 'queries' stamp: 'cf 6/8/2019 11:25:20'!
+listOfBoughtItems
+	|itemList  |
+	itemList := ReadWriteStream on: String new.
+	self putItemsInaList: itemList .				
+	^itemList.				! !
 
-!Carrito methodsFor: 'initialization' stamp: 'j 6/3/2019 13:36:20'!
-initializeWith: unCatalogo
-	catalogo := unCatalogo .
-	itemcontent := Bag  new.
-	listCart := ReadWriteStream on: String new.
-	listCart nextPutAll: '0'.
-	totalAmount :=0.! !
+!Cart methodsFor: 'queries' stamp: 'cf 6/8/2019 09:10:46'!
+listShop
+	|listShop|
+	listShop := ReadWriteStream  on: String new.! !
+
+!Cart methodsFor: 'queries' stamp: 'cf 6/8/2019 11:32:08'!
+makeTicketIn: aShopList 
+	| total item itemAmount|
+	total := 0.
+	item:= String new.
+	itemAmount := 0.
+	[(aShopList peek)notNil]  whileTrue: [  item := aShopList nextLine.
+													itemAmount _ self occurrencesOf: item.
+													aShopList nextLine.
+													total := total + (itemAmount * (catalog at: item)). ].
+	aShopList nextPutAll: (total asString).
+	aShopList reset.! !
+
+!Cart methodsFor: 'queries' stamp: 'cf 6/8/2019 10:41:26'!
+occurrencesOf: anItem
+
+	^items at: anItem ! !
+
+!Cart methodsFor: 'queries' stamp: 'cf 6/8/2019 11:26:44'!
+putItemsInaList: itemList 
+	items keysDo:  [ :item | itemList nextPutAll: (item asString ).
+					    itemList newLine.	
+					    itemList nextPutAll: (self occurrencesOf: item) asString.
+					    itemList newLine.].
+	itemList reset.	! !
+
+
+!Cart methodsFor: 'testing' stamp: 'cf 6/8/2019 10:37:19'!
+includes: anItem
+
+	^items includesKey: anItem ! !
+
+!Cart methodsFor: 'testing' stamp: 'HernanWilkinson 6/17/2013 17:44'!
+isEmpty
+	
+	^items isEmpty ! !
+
+
+!Cart methodsFor: 'adding' stamp: 'cf 6/8/2019 10:36:45'!
+add: aQuantity of: anItem
+
+	self assertIsValidQuantity: aQuantity.
+	self assertIsValidItem: anItem.
+
+	items at: anItem put: aQuantity .! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
-!classDefinition: 'Carrito class' category: #TusLibros!
-Carrito class
+!classDefinition: 'Cart class' category: #TusLibros!
+Cart class
 	instanceVariableNames: ''!
 
-!Carrito class methodsFor: 'errors' stamp: 'cf 6/2/2019 22:01:23'!
-errorCantidadInvalida
-	^'La cantidad Ingresada, no es válida.'! !
+!Cart class methodsFor: 'instance creation' stamp: 'cf 6/8/2019 09:21:19'!
+acceptingItemsOf: aCatalog
+	(aCatalog isEmpty ) ifTrue: [^ Cart new signalEmptyCatalouge ].
+	^self new initializeAcceptingItemsOf: aCatalog ! !
 
-!Carrito class methodsFor: 'errors' stamp: 'cf 6/2/2019 22:03:22'!
-errorItemNoPerteneceAlCatalogo
-	^'El item que intentaste agregar, no pertenece al cátalogo.'! !
 
-!Carrito class methodsFor: 'errors' stamp: 'j 6/3/2019 13:00:48'!
-with: aCatalogue
-
-	^self new initializeWith: aCatalogue ! !
-
-
-!classDefinition: #TusLibros category: #TusLibros!
-Object subclass: #TusLibros
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'TusLibros'!
+!Cart class methodsFor: 'errors' stamp: 'cf 6/8/2019 09:19:38'!
+errorCatalogoVacio
+	^'No puedes crear un carrito con un catalogo vacio'.! !
