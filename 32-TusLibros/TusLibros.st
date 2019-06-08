@@ -146,7 +146,6 @@ TestCase subclass: #CashierTest
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-
 !CashierTest methodsFor: 'test' stamp: 'cf 6/8/2019 11:59:01'!
 test01
 	"el cashier no se puede crear con un carrito vacio"! !
@@ -158,6 +157,48 @@ test02
 !CashierTest methodsFor: 'test' stamp: 'cf 6/8/2019 12:01:35'!
 test03
 	"al tratar de vender con una tarjeta mala dice error"! !
+
+
+!classDefinition: #CreditCardTest category: #TusLibros!
+TestCase subclass: #CreditCardTest
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'TusLibros'!
+
+!CreditCardTest methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:43:44'!
+test01CreditCardKnowsItsOwnerAndNumber
+
+	|card|
+	
+	card := CreditCard name: 'Alan Kay' expiration: June/24/2019  cardNumber: 4378282246310005.
+	
+	self assert: (card owner) equals: 'Alan Kay'.
+	self assert: card cardNumber equals: '4378282246310005'.! !
+
+!CreditCardTest methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:55:40'!
+test02CardCanTellYouIfItExpiredWhenItsDifferentYear
+
+	|card currentDate|
+	
+	card := CreditCard name: 'Alan Kay' expiration: June/24/2019  cardNumber: 4378282246310005.
+	
+	currentDate := April/11/2020.
+	
+	self assert: (card isItExpired: currentDate).! !
+
+!CreditCardTest methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:59:12'!
+test03CardCanTellYouIfItExpiredEvenIfItsSameYear
+
+	|card expiredDate notExpiredDate|
+	
+	card := CreditCard name: 'Alan Kay' expiration: June/24/2019  cardNumber: 4378282246310005.
+	
+	notExpiredDate := April/11/2019.
+	expiredDate := August/22/2019.
+	
+	self deny: (card isItExpired: notExpiredDate ).
+	self assert: (card isItExpired: expiredDate ).! !
 
 
 !classDefinition: #Cart category: #TusLibros!
@@ -311,3 +352,51 @@ listPurchases
 !Cashier methodsFor: 'charging' stamp: 'cf 6/8/2019 11:57:32'!
 checkOutCart
 	"con mi carrito,mi tarjeta de credito y el merchantProccesor emito el cashier o el error  "! !
+
+
+!classDefinition: #CreditCard category: #TusLibros!
+Object subclass: #CreditCard
+	instanceVariableNames: 'owner expDate cardNumber'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'TusLibros'!
+
+!CreditCard methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:28:11'!
+cardNumber
+	^cardNumber asString ! !
+
+!CreditCard methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:55:27'!
+isItExpired: aDate
+
+	 ((expDate monthOfYear year number) = (aDate  monthOfYear year number))
+		ifTrue: [
+				(expDate month > aDate month) 
+				ifTrue: [^false] ifFalse:[^true]
+				].
+			
+	(expDate monthOfYear year number) > (aDate  monthOfYear year number)
+		ifTrue: [^false] ifFalse: [^true]
+																							! !
+
+!CreditCard methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:26:00'!
+owner
+
+	^owner! !
+
+!CreditCard methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:26:43'!
+owner: ownerName expiration: expirationDate number: cardNum
+
+	cardNumber := cardNum .
+	owner := ownerName.
+	expDate := expirationDate.! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'CreditCard class' category: #TusLibros!
+CreditCard class
+	instanceVariableNames: ''!
+
+!CreditCard class methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:27:24'!
+name: owner expiration: expirationDate cardNumber: number
+
+	^self new owner: owner expiration: expirationDate number: number! !
