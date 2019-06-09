@@ -158,6 +158,10 @@ cartWithValidPurchases
 cashierWithAvalidCartAndCreditCard
 	^NewCashier with: self cartWithValidPurchases thisCreditCard: self validCreditCard .! !
 
+!CashierTest methodsFor: 'setUps' stamp: 'cf 6/9/2019 12:55:19'!
+cashierWithAvalidCartAndInvalidCreditCard
+	^NewCashier with: self cartWithValidPurchases thisCreditCard: self expiredCreditCard .! !
+
 !CashierTest methodsFor: 'setUps' stamp: 'cf 6/9/2019 10:53:14'!
 cashierWithEmptyCart 
 	^NewCashier with: (self emptyCart) thisCreditCard: (self validCreditCard ).! !
@@ -187,23 +191,29 @@ test01CantCreateACashierWithEmptyCart
 					raise: Error - MessageNotUnderstood 
 	 					description: [:anError|anError messageText = (CashierState errorEmptyCart )]	! !
 
-!CashierTest methodsFor: 'test' stamp: 'cf 6/9/2019 12:50:31'!
+!CashierTest methodsFor: 'test' stamp: 'cf 6/9/2019 13:02:08'!
 test02ACashierEmitsAFormatedTicketWhenHaveAValidCart
 	"emite Un ticket Correcto"
 	|cashier listCart firstItem secondItem|
 	cashier := self cashierWithAvalidCartAndCreditCard .
 	listCart := cashier listCart.
+	listCart reset.
 	firstItem := '0|Goma|2'.
 	secondItem:= '|Pelota|1'.
 	self assert: (firstItem,secondItem) equals: listCart nextLine .! !
 
-!CashierTest methodsFor: 'test' stamp: 'cf 6/8/2019 12:01:35'!
-test03
-	"al tratar de vender con una tarjeta mala dice error"! !
+!CashierTest methodsFor: 'test' stamp: 'cf 6/9/2019 13:13:23'!
+test03CashierEmitsTheRightAmountForPayment
+	|cashier purchaseTicket listTicket  total|
+	cashier := self cashierWithAvalidCartAndCreditCard .
+	total:= cashier cartTotalAmount .
+	purchaseTicket := cashier listPurchases .
+	listTicket := (cashier listCart) .	
+	self assert: ((listTicket nextPutAll: ('|', (total asString )) )reset nextLine )equals: purchaseTicket nextLine .! !
 
-!CashierTest methodsFor: 'test' stamp: 'cf 6/9/2019 10:21:10'!
+!CashierTest methodsFor: 'test' stamp: 'cf 6/9/2019 12:56:23'!
 test04
-	"con un carrito válido cobra bien"! !
+	"al tratar de vender con una tarjeta mala dice error"! !
 
 
 !classDefinition: #CreditCardTest category: #TusLibros!
@@ -300,14 +310,14 @@ initializeAcceptingItemsOf: aCatalog
 	items := Dictionary new.! !
 
 
+!Cart methodsFor: 'queries' stamp: 'cf 6/9/2019 12:59:58'!
+cartTotalAmount
+	^self calculateTotalWithShopingList:  (self listCart reset) .! !
+
 !Cart methodsFor: 'queries' stamp: 'cf 6/8/2019 10:41:26'!
 occurrencesOf: anItem
 
 	^items at: anItem ! !
-
-!Cart methodsFor: 'queries' stamp: 'cf 6/9/2019 12:23:21'!
-totalAmount
-	^self calculateTotalWithShopingList:  (self listCart reset) .! !
 
 
 !Cart methodsFor: 'testing' stamp: 'cf 6/8/2019 10:37:19'!
@@ -342,10 +352,10 @@ calculateTotalWithShopingList:  aShopList
 													total := total + (itemAmount * (catalog at: item)). ].
 	^total ! !
 
-!Cart methodsFor: 'privates' stamp: 'cf 6/9/2019 12:07:58'!
+!Cart methodsFor: 'privates' stamp: 'cf 6/9/2019 12:59:58'!
 makeTicketIn: aShopList 
 	| total |
-	total := self totalAmount .
+	total := self cartTotalAmount .
 	aShopList nextPutAll: (total asString).
 	aShopList reset.! !
 
@@ -365,12 +375,12 @@ listCart
 	self putItemsInaList: itemList .				
 	^itemList .				! !
 
-!Cart methodsFor: 'Operations' stamp: 'cf 6/9/2019 12:25:00'!
+!Cart methodsFor: 'Operations' stamp: 'cf 6/9/2019 12:59:58'!
 listPurchases
 	| listshop |
 	
 	listshop := self listCart.
-	listshop nextPutAll: (self totalAmount ) asString.
+	listshop nextPutAll: (self cartTotalAmount ) asString.
 	listshop reset.
 	^listshop 												
 	! !
@@ -408,7 +418,7 @@ checkOutCart
 cartTotalAmount
 	^ aCart cartTotalAmount.! !
 
-!CashierState methodsFor: 'consults' stamp: 'cf 6/9/2019 12:29:48'!
+!CashierState methodsFor: 'consults' stamp: 'cf 6/9/2019 13:01:56'!
 listCart
 	"0|ISBN_1|QUANTITY_1|ISBN_2|QUANTITY_2|....|ISBN_N|QUANTITY_N"
 	|listCart listCartFormated|
@@ -418,7 +428,6 @@ listCart
 	listCart reset.
 	[(listCart peek) notNil ]whileTrue: [
 				listCartFormated nextPutAll: '|', (listCart nextLine) , '|', (listCart nextLine ).].
-	listCartFormated reset.
 	^listCartFormated 			! !
 
 !CashierState methodsFor: 'consults' stamp: 'cf 6/9/2019 12:04:03'!
