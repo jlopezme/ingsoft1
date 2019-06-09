@@ -146,6 +146,23 @@ TestCase subclass: #CashierTest
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
+!CashierTest methodsFor: 'setUps' stamp: 'cf 6/8/2019 21:19:20'!
+cashierWithEmptyCart 
+	^NewCashier with: (self emptyCart) thisCreditCard: (self validCard).! !
+
+!CashierTest methodsFor: 'setUps' stamp: 'cf 6/8/2019 12:14:18'!
+emptyCart
+	|catalog|
+		catalog := Dictionary new.
+		catalog at: 'Pelota' put: (3 * peso ).
+		catalog at: 'Goma' put: (4 * peso).
+		^ Cart acceptingItemsOf: catalog .! !
+
+!CashierTest methodsFor: 'setUps' stamp: 'cf 6/8/2019 12:14:50'!
+validCard
+	^'tarjeta valida'.! !
+
+
 !CashierTest methodsFor: 'test' stamp: 'cf 6/8/2019 11:59:01'!
 test01
 	"el cashier no se puede crear con un carrito vacio"! !
@@ -166,39 +183,39 @@ TestCase subclass: #CreditCardTest
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!CreditCardTest methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:43:44'!
+!CreditCardTest methodsFor: 'test' stamp: 'cf 6/8/2019 22:24:38'!
 test01CreditCardKnowsItsOwnerAndNumber
 
 	|card|
 	
-	card := CreditCard name: 'Alan Kay' expiration: June/24/2019  cardNumber: 4378282246310005.
+	card := self validCreditCard .
 	
-	self assert: (card owner) equals: 'Alan Kay'.
+	self assert: (card ownerName ) equals: 'Alan'.
+	self assert: (card ownerLastName ) equals: 'Kay'.
 	self assert: card cardNumber equals: '4378282246310005'.! !
 
-!CreditCardTest methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:55:40'!
-test02CardCanTellYouIfItExpiredWhenItsDifferentYear
+!CreditCardTest methodsFor: 'test' stamp: 'cf 6/8/2019 22:15:24'!
+test02ACardCansaidIfItsExpired
 
-	|card currentDate|
+	|notExpiredCard expiredCard actualMonth  |
 	
-	card := CreditCard name: 'Alan Kay' expiration: June/24/2019  cardNumber: 4378282246310005.
+	notExpiredCard := self validCreditCard .
+	expiredCard := self expiredCard.
 	
-	currentDate := April/11/2020.
+	actualMonth := (GregorianMonthOfYear current) next .
 	
-	self assert: (card isItExpired: currentDate).! !
+	self assert: (notExpiredCard isItExpired: actualMonth ).
+	self assert: (expiredCard isItExpired: actualMonth )! !
 
-!CreditCardTest methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:59:12'!
-test03CardCanTellYouIfItExpiredEvenIfItsSameYear
 
-	|card expiredDate notExpiredDate|
-	
-	card := CreditCard name: 'Alan Kay' expiration: June/24/2019  cardNumber: 4378282246310005.
-	
-	notExpiredDate := April/11/2019.
-	expiredDate := August/22/2019.
-	
-	self deny: (card isItExpired: notExpiredDate ).
-	self assert: (card isItExpired: expiredDate ).! !
+!CreditCardTest methodsFor: 'setUp' stamp: 'cf 6/8/2019 22:23:14'!
+expiredCard
+	^CreditCard firstname: 'Alan' lastName:'Kay'  expiration:(June of: 1961)  cardNumber: 4378282246310005! !
+
+!CreditCardTest methodsFor: 'setUp' stamp: 'cf 6/8/2019 22:22:16'!
+validCreditCard
+	^CreditCard firstname: 'Alan' lastName:'Kay'  expiration:(GregorianMonthOfYear current )  cardNumber: 4378282246310005
+	! !
 
 
 !classDefinition: #Cart category: #TusLibros!
@@ -328,67 +345,114 @@ errorCatalogoVacio
 	^'No puedes crear un carrito con un catalogo vacio'.! !
 
 
-!classDefinition: #Cashier category: #TusLibros!
-Object subclass: #Cashier
+!classDefinition: #CashierState category: #TusLibros!
+Object subclass: #CashierState
 	instanceVariableNames: 'aCart aCreditCard aMerchantProccesor'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!Cashier methodsFor: 'Privates' stamp: 'cf 6/8/2019 11:42:51'!
-requestCart
-	^aCart ! !
+!CashierState methodsFor: 'charging' stamp: 'cf 6/8/2019 21:22:31'!
+checkOutCart
+	^self subclassResponsibility ! !
 
 
-!Cashier methodsFor: 'consults' stamp: 'cf 6/8/2019 11:56:44'!
-listCart
-	^aCart listCart! !
-
-!Cashier methodsFor: 'consults' stamp: 'cf 6/8/2019 11:56:19'!
+!CashierState methodsFor: 'consults' stamp: 'cf 6/8/2019 21:28:02'!
 listPurchases
+	
 	^ aCart listPurchases ! !
 
-
-!Cashier methodsFor: 'charging' stamp: 'cf 6/8/2019 11:57:32'!
-checkOutCart
-	"con mi carrito,mi tarjeta de credito y el merchantProccesor emito el cashier o el error  "! !
-
 
-!classDefinition: #CreditCard category: #TusLibros!
-Object subclass: #CreditCard
-	instanceVariableNames: 'owner expDate cardNumber'
+!classDefinition: #NewCashier category: #TusLibros!
+CashierState subclass: #NewCashier
+	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!CreditCard methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:28:11'!
+!NewCashier methodsFor: 'charging' stamp: 'cf 6/8/2019 21:30:54'!
+checkOutCart
+	"con mi carrito,mi tarjeta de credito y el merchantProccesor emito el cashier o el error  "
+	^UsedCashier with: aCreditCard thisCreditCard: aCreditCard .
+	! !
+
+
+!NewCashier methodsFor: 'initialization' stamp: 'cf 6/8/2019 12:28:48'!
+initializeWith: thisCart andThis: creditCard
+	aCart := thisCart .
+	aCreditCard := creditCard .! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'NewCashier class' category: #TusLibros!
+NewCashier class
+	instanceVariableNames: ''!
+
+!NewCashier class methodsFor: 'instance creation' stamp: 'cf 6/8/2019 12:18:19'!
+with: thisCart thisCreditCard: creditCard 
+	^self new initializeWith: thisCart andThis: creditCard ! !
+
+
+!classDefinition: #UsedCashier category: #TusLibros!
+CashierState subclass: #UsedCashier
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'TusLibros'!
+
+!UsedCashier methodsFor: 'charging' stamp: 'cf 6/8/2019 21:23:20'!
+checkOutCart
+	^self signalItsAlreadyCheckOut! !
+
+
+!UsedCashier methodsFor: 'initialization' stamp: 'cf 6/8/2019 21:23:51'!
+initializeWith: thisCart andThis: creditCard
+	aCart := thisCart .
+	aCreditCard := creditCard .! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'UsedCashier class' category: #TusLibros!
+UsedCashier class
+	instanceVariableNames: ''!
+
+!UsedCashier class methodsFor: 'instance creation' stamp: 'cf 6/8/2019 21:30:00'!
+with: thisCart thisCreditCard: creditCard 
+	^self new initializeWith: thisCart andThis: creditCard ! !
+
+
+!classDefinition: #CreditCard category: #TusLibros!
+Object subclass: #CreditCard
+	instanceVariableNames: 'ownerfirstName ownerLastName expDate cardNumber'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'TusLibros'!
+
+!CreditCard methodsFor: 'initialization' stamp: 'cf 6/8/2019 22:21:06'!
+ownerName: ownersName  ownerLastName: ownerlastName expiration: expirationDate number: number
+	cardNumber := number .
+	ownerfirstName := ownersName.
+	ownerLastName := ownerlastName .
+	expDate := expirationDate.! !
+
+
+!CreditCard methodsFor: 'consults' stamp: 'j 6/8/2019 17:28:11'!
 cardNumber
 	^cardNumber asString ! !
 
-!CreditCard methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:55:27'!
-isItExpired: aDate
+!CreditCard methodsFor: 'consults' stamp: 'cf 6/8/2019 21:51:36'!
+isItExpired: actualDate
+	^ expDate < actualDate 														! !
 
-	 ((expDate monthOfYear year number) = (aDate  monthOfYear year number))
-		ifTrue: [
-				(expDate month > aDate month) 
-				ifTrue: [^false] ifFalse:[^true]
-				].
-			
-	(expDate monthOfYear year number) > (aDate  monthOfYear year number)
-		ifTrue: [^false] ifFalse: [^true]
-																							! !
+!CreditCard methodsFor: 'consults' stamp: 'cf 6/8/2019 22:24:07'!
+ownerLastName
 
-!CreditCard methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:26:00'!
-owner
+	^ownerLastName ! !
 
-	^owner! !
+!CreditCard methodsFor: 'consults' stamp: 'cf 6/8/2019 22:23:54'!
+ownerName
 
-!CreditCard methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:26:43'!
-owner: ownerName expiration: expirationDate number: cardNum
-
-	cardNumber := cardNum .
-	owner := ownerName.
-	expDate := expirationDate.! !
+	^ownerfirstName ! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -396,7 +460,7 @@ owner: ownerName expiration: expirationDate number: cardNum
 CreditCard class
 	instanceVariableNames: ''!
 
-!CreditCard class methodsFor: 'as yet unclassified' stamp: 'j 6/8/2019 17:27:24'!
-name: owner expiration: expirationDate cardNumber: number
-
-	^self new owner: owner expiration: expirationDate number: number! !
+!CreditCard class methodsFor: 'as yet unclassified' stamp: 'cf 6/8/2019 22:31:53'!
+firstname: ownerName lastName: ownerLastName expiration: expirationDate cardNumber: number
+	(((ownerName isEmpty ) or: [ownerLastName isEmpty ]) or:[(((number asString) size) =16) not] )ifTrue: [ ^Error.].
+	^self new ownerName: ownerName  ownerLastName: ownerLastName expiration: expirationDate number: number! !
