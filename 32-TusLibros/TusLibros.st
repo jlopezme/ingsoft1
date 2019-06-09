@@ -146,9 +146,20 @@ TestCase subclass: #CashierTest
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!CashierTest methodsFor: 'setUps' stamp: 'cf 6/8/2019 21:19:20'!
+!CashierTest methodsFor: 'setUps' stamp: 'cf 6/9/2019 10:57:53'!
+cartWithValidPurchases
+	|cartWithPurchases|
+	cartWithPurchases := self emptyCart .
+	cartWithPurchases add: 1 of: 'Pelota'.
+	^cartWithPurchases .! !
+
+!CashierTest methodsFor: 'setUps' stamp: 'cf 6/9/2019 10:59:51'!
+cashierWithAvalidCartAndCreditCard
+	^NewCashier with: self cartWithValidPurchases thisCreditCard: self validCreditCard .! !
+
+!CashierTest methodsFor: 'setUps' stamp: 'cf 6/9/2019 10:53:14'!
 cashierWithEmptyCart 
-	^NewCashier with: (self emptyCart) thisCreditCard: (self validCard).! !
+	^NewCashier with: (self emptyCart) thisCreditCard: (self validCreditCard ).! !
 
 !CashierTest methodsFor: 'setUps' stamp: 'cf 6/8/2019 12:14:18'!
 emptyCart
@@ -158,22 +169,36 @@ emptyCart
 		catalog at: 'Goma' put: (4 * peso).
 		^ Cart acceptingItemsOf: catalog .! !
 
-!CashierTest methodsFor: 'setUps' stamp: 'cf 6/8/2019 12:14:50'!
-validCard
-	^'tarjeta valida'.! !
+!CashierTest methodsFor: 'setUps' stamp: 'cf 6/9/2019 10:02:52'!
+expiredCreditCard
+	^CreditCard firstname: 'Alan' lastName:'Kay'  expiration:(June of: 1961)  cardNumber: 4378282246310005! !
+
+!CashierTest methodsFor: 'setUps' stamp: 'cf 6/9/2019 10:05:49'!
+validCreditCard
+	^CreditCard firstname: 'Alan' lastName:'Kay'  expiration:((GregorianMonthOfYear current) next )  cardNumber: 4378282246310005
+	! !
 
 
-!CashierTest methodsFor: 'test' stamp: 'cf 6/8/2019 11:59:01'!
-test01
-	"el cashier no se puede crear con un carrito vacio"! !
+!CashierTest methodsFor: 'test' stamp: 'cf 6/9/2019 10:53:44'!
+test01CantCreateACashierWithEmptyCart
 
-!CashierTest methodsFor: 'test' stamp: 'cf 6/8/2019 12:00:44'!
+	self should: [self cashierWithEmptyCart ] 
+					raise: Error - MessageNotUnderstood 
+	 					description: [:anError|anError messageText = (CashierState errorEmptyCart )]	! !
+
+!CashierTest methodsFor: 'test' stamp: 'cf 6/9/2019 10:59:04'!
 test02
-	"con un carrito válido cobra bien"! !
+	"con un carrito válido cobra bien"
+	|cashier |
+	cashier := self cashierWithAvalidCartAndCreditCard .! !
 
 !CashierTest methodsFor: 'test' stamp: 'cf 6/8/2019 12:01:35'!
 test03
 	"al tratar de vender con una tarjeta mala dice error"! !
+
+!CashierTest methodsFor: 'test' stamp: 'cf 6/9/2019 10:21:10'!
+test04
+	"con un carrito válido cobra bien"! !
 
 
 !classDefinition: #CreditCardTest category: #TusLibros!
@@ -194,27 +219,39 @@ test01CreditCardKnowsItsOwnerAndNumber
 	self assert: (card ownerLastName ) equals: 'Kay'.
 	self assert: card cardNumber equals: '4378282246310005'.! !
 
-!CreditCardTest methodsFor: 'test' stamp: 'cf 6/8/2019 22:15:24'!
-test02ACardCansaidIfItsExpired
+!CreditCardTest methodsFor: 'test' stamp: 'cf 6/9/2019 10:04:47'!
+test02ACardCansaidIfItsExpiredAccordingToADate
 
 	|notExpiredCard expiredCard actualMonth  |
 	
 	notExpiredCard := self validCreditCard .
 	expiredCard := self expiredCard.
 	
-	actualMonth := (GregorianMonthOfYear current) next .
+	actualMonth := (GregorianMonthOfYear current).
 	
-	self assert: (notExpiredCard isItExpired: actualMonth ).
+	self deny: (notExpiredCard isItExpired: actualMonth ).
 	self assert: (expiredCard isItExpired: actualMonth )! !
+
+!CreditCardTest methodsFor: 'test' stamp: 'cf 6/9/2019 10:36:38'!
+test03CanCreateAcreditCardWithEmptyNameOrLastName
+	self should: [^CreditCard firstname: '' lastName:''  expiration:((GregorianMonthOfYear current) next )  cardNumber: 4378282246310005]
+							 raise: Error 
+								description: [:anError| anError messageText = CreditCard new signalEmptyNames ]! !
+
+!CreditCardTest methodsFor: 'test' stamp: 'cf 6/9/2019 10:48:22'!
+test04CantCreateACreditCardWithWrongCreditNumber
+	self should: [^CreditCard firstname: 'Alan' lastName:'Kay'  expiration:((GregorianMonthOfYear current) next )  cardNumber: 0]
+							 raise: Error 
+								description: [:anError| anError messageText = CreditCard new signalInvalidNumber ]! !
 
 
 !CreditCardTest methodsFor: 'setUp' stamp: 'cf 6/8/2019 22:23:14'!
 expiredCard
 	^CreditCard firstname: 'Alan' lastName:'Kay'  expiration:(June of: 1961)  cardNumber: 4378282246310005! !
 
-!CreditCardTest methodsFor: 'setUp' stamp: 'cf 6/8/2019 22:22:16'!
+!CreditCardTest methodsFor: 'setUp' stamp: 'cf 6/9/2019 10:04:28'!
 validCreditCard
-	^CreditCard firstname: 'Alan' lastName:'Kay'  expiration:(GregorianMonthOfYear current )  cardNumber: 4378282246310005
+	^CreditCard firstname: 'Alan' lastName:'Kay'  expiration:((GregorianMonthOfYear current) next )  cardNumber: 4378282246310005
 	! !
 
 
@@ -362,6 +399,21 @@ listPurchases
 	
 	^ aCart listPurchases ! !
 
+
+!CashierState methodsFor: 'signals' stamp: 'cf 6/9/2019 10:19:19'!
+signalEmptyCart
+	^self error: self class errorEmptyCart ! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'CashierState class' category: #TusLibros!
+CashierState class
+	instanceVariableNames: ''!
+
+!CashierState class methodsFor: 'error' stamp: 'cf 6/9/2019 10:12:55'!
+errorEmptyCart
+	^'No se puede usar un carrito vacio para el cajero'.! !
+
 
 !classDefinition: #NewCashier category: #TusLibros!
 CashierState subclass: #NewCashier
@@ -388,8 +440,9 @@ initializeWith: thisCart andThis: creditCard
 NewCashier class
 	instanceVariableNames: ''!
 
-!NewCashier class methodsFor: 'instance creation' stamp: 'cf 6/8/2019 12:18:19'!
+!NewCashier class methodsFor: 'instance creation' stamp: 'cf 6/9/2019 10:19:36'!
 with: thisCart thisCreditCard: creditCard 
+	(thisCart isEmpty) ifTrue: [^CashierState new signalEmptyCart ].
 	^self new initializeWith: thisCart andThis: creditCard ! !
 
 
@@ -399,6 +452,11 @@ CashierState subclass: #UsedCashier
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibros'!
+
+!UsedCashier methodsFor: 'signals' stamp: 'cf 6/9/2019 09:56:53'!
+signalItsAlreadyCheckOut
+	^self error: self class errorCarritoyacobrado.! !
+
 
 !UsedCashier methodsFor: 'charging' stamp: 'cf 6/8/2019 21:23:20'!
 checkOutCart
@@ -415,6 +473,11 @@ initializeWith: thisCart andThis: creditCard
 !classDefinition: 'UsedCashier class' category: #TusLibros!
 UsedCashier class
 	instanceVariableNames: ''!
+
+!UsedCashier class methodsFor: 'error' stamp: 'cf 6/9/2019 09:57:58'!
+errorCarritoyacobrado
+	^'Este Cajero ya cobro a su carrito'.! !
+
 
 !UsedCashier class methodsFor: 'instance creation' stamp: 'cf 6/8/2019 21:30:00'!
 with: thisCart thisCreditCard: creditCard 
@@ -434,6 +497,15 @@ ownerName: ownersName  ownerLastName: ownerlastName expiration: expirationDate n
 	ownerfirstName := ownersName.
 	ownerLastName := ownerlastName .
 	expDate := expirationDate.! !
+
+
+!CreditCard methodsFor: 'signals' stamp: 'cf 6/9/2019 10:28:13'!
+signalEmptyNames
+	^self error: self class errorNombresVacios.! !
+
+!CreditCard methodsFor: 'signals' stamp: 'cf 6/9/2019 10:35:27'!
+signalInvalidNumber
+	^self error: self class errorNumeroDeTarjetaInvalido.! !
 
 
 !CreditCard methodsFor: 'consults' stamp: 'j 6/8/2019 17:28:11'!
@@ -460,7 +532,29 @@ ownerName
 CreditCard class
 	instanceVariableNames: ''!
 
-!CreditCard class methodsFor: 'as yet unclassified' stamp: 'cf 6/8/2019 22:31:53'!
+!CreditCard class methodsFor: 'errors' stamp: 'cf 6/9/2019 10:28:46'!
+errorNombresVacios
+	^'No se pueden crear tarjetas con nombres vacios'.! !
+
+!CreditCard class methodsFor: 'errors' stamp: 'cf 6/9/2019 10:35:47'!
+errorNumeroDeTarjetaInvalido
+	^'Numero de tarjeta invalido'.! !
+
+
+!CreditCard class methodsFor: 'instance creation' stamp: 'cf 6/9/2019 10:42:03'!
 firstname: ownerName lastName: ownerLastName expiration: expirationDate cardNumber: number
-	(((ownerName isEmpty ) or: [ownerLastName isEmpty ]) or:[(((number asString) size) =16) not] )ifTrue: [ ^Error.].
+	self assertIfOwnerHasAvalidName: ownerName and: ownerLastName .
+	self assertIfOwnerHasAvalidCreditNumber: number.
 	^self new ownerName: ownerName  ownerLastName: ownerLastName expiration: expirationDate number: number! !
+
+
+!CreditCard class methodsFor: 'asserts' stamp: 'cf 6/9/2019 10:49:08'!
+assertIfOwnerHasAvalidCreditNumber: number
+	|rightLong isValidType|
+	rightLong := (((number asString) size) =16).
+	isValidType := (number isKindOf: SmallInteger ).
+	(rightLong and:[isValidType]) ifFalse: [^CreditCard new signalInvalidNumber]. ! !
+
+!CreditCard class methodsFor: 'asserts' stamp: 'cf 6/9/2019 10:40:02'!
+assertIfOwnerHasAvalidName: ownerName and: ownerLastName
+	(((ownerName isEmpty ) or: [ownerLastName isEmpty ]))ifTrue: [ ^CreditCard new signalEmptyNames .].! !
