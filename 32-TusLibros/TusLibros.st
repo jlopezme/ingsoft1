@@ -103,13 +103,13 @@ test09YouCantCreateACartWithAnEmptyCatalog
 		withExceptionDo: [ :anError |
 			self assert: anError messageText  = Cart errorCatalogoVacio .]! !
 
-!CartTest methodsFor: 'tests' stamp: 'cf 6/8/2019 12:08:24'!
+!CartTest methodsFor: 'tests' stamp: 'cf 6/9/2019 12:26:35'!
 test10TicketShowTheCorrectAmountOfAddingItems
 	| cart ticket  |
 	
 	cart := self createCart .
 	cart add: 3 of: 'Pelota' .
-	ticket := cart listCart  .
+	ticket := (cart listCart) reset  .
 	self assert: (ticket nextLine ) equals: 'Pelota'.
 	self assert: (ticket nextLine ) equals: '3'.! !
 
@@ -146,10 +146,11 @@ TestCase subclass: #CashierTest
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!CashierTest methodsFor: 'setUps' stamp: 'cf 6/9/2019 10:57:53'!
+!CashierTest methodsFor: 'setUps' stamp: 'cf 6/9/2019 12:45:56'!
 cartWithValidPurchases
 	|cartWithPurchases|
 	cartWithPurchases := self emptyCart .
+	cartWithPurchases add: 2 of: 'Goma'.
 	cartWithPurchases add: 1 of: 'Pelota'.
 	^cartWithPurchases .! !
 
@@ -186,11 +187,15 @@ test01CantCreateACashierWithEmptyCart
 					raise: Error - MessageNotUnderstood 
 	 					description: [:anError|anError messageText = (CashierState errorEmptyCart )]	! !
 
-!CashierTest methodsFor: 'test' stamp: 'cf 6/9/2019 10:59:04'!
-test02
-	"con un carrito válido cobra bien"
-	|cashier |
-	cashier := self cashierWithAvalidCartAndCreditCard .! !
+!CashierTest methodsFor: 'test' stamp: 'cf 6/9/2019 12:50:31'!
+test02ACashierEmitsAFormatedTicketWhenHaveAValidCart
+	"emite Un ticket Correcto"
+	|cashier listCart firstItem secondItem|
+	cashier := self cashierWithAvalidCartAndCreditCard .
+	listCart := cashier listCart.
+	firstItem := '0|Goma|2'.
+	secondItem:= '|Pelota|1'.
+	self assert: (firstItem,secondItem) equals: listCart nextLine .! !
 
 !CashierTest methodsFor: 'test' stamp: 'cf 6/8/2019 12:01:35'!
 test03
@@ -300,6 +305,10 @@ occurrencesOf: anItem
 
 	^items at: anItem ! !
 
+!Cart methodsFor: 'queries' stamp: 'cf 6/9/2019 12:23:21'!
+totalAmount
+	^self calculateTotalWithShopingList:  (self listCart reset) .! !
+
 
 !Cart methodsFor: 'testing' stamp: 'cf 6/8/2019 10:37:19'!
 includes: anItem
@@ -333,35 +342,36 @@ calculateTotalWithShopingList:  aShopList
 													total := total + (itemAmount * (catalog at: item)). ].
 	^total ! !
 
-!Cart methodsFor: 'privates' stamp: 'cf 6/8/2019 12:04:58'!
+!Cart methodsFor: 'privates' stamp: 'cf 6/9/2019 12:07:58'!
 makeTicketIn: aShopList 
 	| total |
-	total := self calculateTotalWithShopingList: aShopList .
+	total := self totalAmount .
 	aShopList nextPutAll: (total asString).
 	aShopList reset.! !
 
-!Cart methodsFor: 'privates' stamp: 'cf 6/8/2019 11:26:44'!
+!Cart methodsFor: 'privates' stamp: 'cf 6/9/2019 12:22:45'!
 putItemsInaList: itemList 
 	items keysDo:  [ :item | itemList nextPutAll: (item asString ).
 					    itemList newLine.	
 					    itemList nextPutAll: (self occurrencesOf: item) asString.
 					    itemList newLine.].
-	itemList reset.	! !
+	itemList .	! !
 
 
-!Cart methodsFor: 'Operations' stamp: 'cf 6/8/2019 11:49:00'!
+!Cart methodsFor: 'Operations' stamp: 'cf 6/9/2019 12:26:02'!
 listCart
 	|itemList  |
 	itemList := ReadWriteStream on: String new.
 	self putItemsInaList: itemList .				
-	^itemList.				! !
+	^itemList .				! !
 
-!Cart methodsFor: 'Operations' stamp: 'cf 6/8/2019 11:49:23'!
+!Cart methodsFor: 'Operations' stamp: 'cf 6/9/2019 12:25:00'!
 listPurchases
 	| listshop |
 	
 	listshop := self listCart.
-	self makeTicketIn: listshop  .
+	listshop nextPutAll: (self totalAmount ) asString.
+	listshop reset.
 	^listshop 												
 	! !
 
@@ -394,10 +404,31 @@ checkOutCart
 	^self subclassResponsibility ! !
 
 
-!CashierState methodsFor: 'consults' stamp: 'cf 6/8/2019 21:28:02'!
+!CashierState methodsFor: 'consults' stamp: 'cf 6/9/2019 12:05:37'!
+cartTotalAmount
+	^ aCart cartTotalAmount.! !
+
+!CashierState methodsFor: 'consults' stamp: 'cf 6/9/2019 12:29:48'!
+listCart
+	"0|ISBN_1|QUANTITY_1|ISBN_2|QUANTITY_2|....|ISBN_N|QUANTITY_N"
+	|listCart listCartFormated|
+	listCartFormated := ReadWriteStream on: String new.
+	listCart := aCart listCart .
+	listCartFormated nextPutAll: '0'.
+	listCart reset.
+	[(listCart peek) notNil ]whileTrue: [
+				listCartFormated nextPutAll: '|', (listCart nextLine) , '|', (listCart nextLine ).].
+	listCartFormated reset.
+	^listCartFormated 			! !
+
+!CashierState methodsFor: 'consults' stamp: 'cf 6/9/2019 12:04:03'!
 listPurchases
-	
-	^ aCart listPurchases ! !
+	"0|ISBN_1|QUANTITY_1|ISBN_2|QUANTITY_2|....|ISBN_N|QUANTITY_N|TOTAL_AMOUNT"
+	|cashierList totalAmount|
+	cashierList := self listCart .
+	totalAmount := self cartTotalAmount .
+	cashierList nextPutAll: '|', (totalAmount ) asString.
+	^cashierList reset.! !
 
 
 !CashierState methodsFor: 'signals' stamp: 'cf 6/9/2019 10:19:19'!
