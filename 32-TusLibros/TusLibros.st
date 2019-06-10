@@ -191,8 +191,8 @@ test01CantCreateACashierWithEmptyCart
 					raise: Error - MessageNotUnderstood 
 	 					description: [:anError|anError messageText = (CashierState errorEmptyCart )]	! !
 
-!CashierTest methodsFor: 'test' stamp: 'cf 6/9/2019 13:02:08'!
-test02ACashierEmitsAFormatedTicketWhenHaveAValidCart
+!CashierTest methodsFor: 'test' stamp: 'j 6/9/2019 22:07:59'!
+test02ACashierEmitsAFormattedTicketWhenItHasAValidCart
 	"emite Un ticket Correcto"
 	|cashier listCart firstItem secondItem|
 	cashier := self cashierWithAvalidCartAndCreditCard .
@@ -211,9 +211,20 @@ test03CashierEmitsTheRightAmountForPayment
 	listTicket := (cashier listCart) .	
 	self assert: ((listTicket nextPutAll: ('|', (total asString )) )reset nextLine )equals: purchaseTicket nextLine .! !
 
-!CashierTest methodsFor: 'test' stamp: 'cf 6/9/2019 12:56:23'!
-test04
-	"al tratar de vender con una tarjeta mala dice error"! !
+!CashierTest methodsFor: 'test' stamp: 'j 6/10/2019 00:51:38'!
+test04CantPayWithInvalidCrediCard
+	"al tratar de vender con una tarjeta mala dice error"
+	
+	|cashier|
+	cashier := self cashierWithAvalidCartAndInvalidCreditCard.
+
+
+	
+	
+	self should: [cashier checkOutCart ] 
+		 raise: Error - MessageNotUnderstood 
+	 	 withExceptionDo: [:anError|
+			self assert: anError messageText = (MerchantProcessorProxy cardIsExpiredError )]	! !
 
 
 !classDefinition: #CreditCardTest category: #TusLibros!
@@ -404,7 +415,7 @@ errorCatalogoVacio
 
 !classDefinition: #CashierState category: #TusLibros!
 Object subclass: #CashierState
-	instanceVariableNames: 'aCart aCreditCard aMerchantProccesor'
+	instanceVariableNames: 'aCart aCreditCard aMerchantProcessor'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibros'!
@@ -462,17 +473,21 @@ CashierState subclass: #NewCashier
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!NewCashier methodsFor: 'charging' stamp: 'cf 6/8/2019 21:30:54'!
+!NewCashier methodsFor: 'charging' stamp: 'j 6/10/2019 00:37:31'!
 checkOutCart
 	"con mi carrito,mi tarjeta de credito y el merchantProccesor emito el cashier o el error  "
+	
+	aMerchantProcessor checkCreditCard: aCreditCard andAmount: self cartTotalAmount .
+	
 	^UsedCashier with: aCreditCard thisCreditCard: aCreditCard .
 	! !
 
 
-!NewCashier methodsFor: 'initialization' stamp: 'cf 6/8/2019 12:28:48'!
+!NewCashier methodsFor: 'initialization' stamp: 'j 6/9/2019 22:20:31'!
 initializeWith: thisCart andThis: creditCard
 	aCart := thisCart .
-	aCreditCard := creditCard .! !
+	aCreditCard := creditCard .
+	aMerchantProcessor  := MerchantProcessorProxy new.! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -598,3 +613,95 @@ assertIfOwnerHasAvalidCreditNumber: number
 !CreditCard class methodsFor: 'asserts' stamp: 'cf 6/9/2019 10:40:02'!
 assertIfOwnerHasAvalidName: ownerName and: ownerLastName
 	(((ownerName isEmpty ) or: [ownerLastName isEmpty ]))ifTrue: [ ^CreditCard new signalEmptyNames .].! !
+
+
+!classDefinition: #MerchantProcessorProxy category: #TusLibros!
+Object subclass: #MerchantProcessorProxy
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'TusLibros'!
+
+!MerchantProcessorProxy methodsFor: 'errorMessages' stamp: 'j 6/10/2019 00:46:41'!
+cardIsExpiredErrorMessage
+
+	^self error: MerchantProcessorProxy cardIsExpiredError.
+		
+	! !
+
+!MerchantProcessorProxy methodsFor: 'errorMessages' stamp: 'j 6/9/2019 22:52:40'!
+invalidAmountErrorMessage
+
+	^'the amount that you are trying to pay is not allowed'
+	
+	
+
+	! !
+
+!MerchantProcessorProxy methodsFor: 'errorMessages' stamp: 'j 6/9/2019 22:57:15'!
+invalidCreditCardOwnerNameErrorMessage
+	
+	^'the name of the credit card owner is too long'
+	! !
+
+
+!MerchantProcessorProxy methodsFor: 'verifications' stamp: 'j 6/9/2019 22:42:32'!
+verifyAmount: anAmount
+
+	[anAmount > 999999999999999] ifTrue: [self error: self invalidAmountErrorMessage].
+	
+	
+
+	! !
+
+!MerchantProcessorProxy methodsFor: 'verifications' stamp: 'j 6/10/2019 00:47:42'!
+verifyCardExpirationDate: aCard
+
+	(aCard isItExpired: GregorianMonthOfYear current) ifTrue: [self cardIsExpiredErrorMessage ]
+		
+	! !
+
+!MerchantProcessorProxy methodsFor: 'verifications' stamp: 'j 6/9/2019 22:48:57'!
+verifyCardNumber: cardNumber
+
+	"checkea si el numero de tarjeta es valido"
+	! !
+
+!MerchantProcessorProxy methodsFor: 'verifications' stamp: 'j 6/10/2019 00:40:49'!
+verifyCreditCardDetails: aCreditCard.
+	
+
+		self verifyCardExpirationDate: aCreditCard.
+		self verifyOwnerName: aCreditCard .
+		self verifyCardNumber: aCreditCard cardNumber.		
+	! !
+
+!MerchantProcessorProxy methodsFor: 'verifications' stamp: 'j 6/9/2019 22:57:29'!
+verifyOwnerName: aCard
+
+	|fullName|
+	
+	fullName := (aCard ownerName) append: aCard ownerLastName.
+	
+	(fullName size > 30) ifTrue: [self error: self invalidCreditCardOwnerNameErrorMessage ]
+	! !
+
+
+!MerchantProcessorProxy methodsFor: 'operations' stamp: 'j 6/9/2019 22:39:23'!
+checkCreditCard: aCreditCard andAmount: anAmount
+
+	self verifyCreditCardDetails: aCreditCard.
+	self verifyAmount: anAmount.
+
+	! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'MerchantProcessorProxy class' category: #TusLibros!
+MerchantProcessorProxy class
+	instanceVariableNames: ''!
+
+!MerchantProcessorProxy class methodsFor: 'as yet unclassified' stamp: 'j 6/10/2019 00:47:06'!
+cardIsExpiredError
+
+	^'the credit card has expired already'! !
