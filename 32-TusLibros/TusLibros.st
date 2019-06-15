@@ -191,9 +191,9 @@ test01CantCreateACashierWithEmptyCart
 					raise: Error - MessageNotUnderstood 
 	 					description: [:anError|anError messageText = (CashierState errorEmptyCart )]	! !
 
-!CashierTest methodsFor: 'test' stamp: 'j 6/9/2019 22:07:59'!
+!CashierTest methodsFor: 'test' stamp: 'cf 6/15/2019 09:20:20'!
 test02ACashierEmitsAFormattedTicketWhenItHasAValidCart
-	"emite Un ticket Correcto"
+	
 	|cashier listCart firstItem secondItem|
 	cashier := self cashierWithAvalidCartAndCreditCard .
 	listCart := cashier listCart.
@@ -211,20 +211,32 @@ test03CashierEmitsTheRightAmountForPayment
 	listTicket := (cashier listCart) .	
 	self assert: ((listTicket nextPutAll: ('|', (total asString )) )reset nextLine )equals: purchaseTicket nextLine .! !
 
-!CashierTest methodsFor: 'test' stamp: 'j 6/10/2019 00:51:38'!
+!CashierTest methodsFor: 'test' stamp: 'cf 6/15/2019 09:21:17'!
 test04CantPayWithInvalidCrediCard
-	"al tratar de vender con una tarjeta mala dice error"
+	
 	
 	|cashier|
-	cashier := self cashierWithAvalidCartAndInvalidCreditCard.
-
-
-	
+	cashier := self cashierWithAvalidCartAndInvalidCreditCard .
 	
 	self should: [cashier checkOutCart ] 
 		 raise: Error - MessageNotUnderstood 
 	 	 withExceptionDo: [:anError|
-			self assert: anError messageText = (MerchantProcessorProxy cardIsExpiredError )]	! !
+			self assert: anError messageText = (NewCashier errorTarjetaVencida )]	! !
+
+!CashierTest methodsFor: 'test' stamp: 'cf 6/15/2019 09:55:37'!
+test05ConsultACashierBeforeCheckOutIndicates0AsTotalCharged
+	
+	|cashier|
+	cashier := self cashierWithAvalidCartAndInvalidCreditCard .
+	self assert: (cashier totalCharged) equals: (0*peso). 	! !
+
+!CashierTest methodsFor: 'test' stamp: 'cf 6/15/2019 09:49:58'!
+test06AfterTheCheckOutTheCashierRememberHowMuchHasCharged
+	|cashier totalToCharge|
+	cashier := self cashierWithAvalidCartAndCreditCard .
+	totalToCharge := cashier cartTotalAmount .
+	cashier checkOutCart .
+	self assert: (cashier totalCharged ) equals: totalToCharge .! !
 
 
 !classDefinition: #CreditCardTest category: #TusLibros!
@@ -473,14 +485,35 @@ CashierState subclass: #NewCashier
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!NewCashier methodsFor: 'charging' stamp: 'j 6/10/2019 00:37:31'!
+!NewCashier methodsFor: 'charging' stamp: 'cf 6/15/2019 09:45:45'!
 checkOutCart
-	"con mi carrito,mi tarjeta de credito y el merchantProccesor emito el cashier o el error  "
+	
+	self checkForExpiredCard.
 	
 	aMerchantProcessor checkCreditCard: aCreditCard andAmount: self cartTotalAmount .
 	
-	^UsedCashier with: aCreditCard thisCreditCard: aCreditCard .
+	"[ originalDecoratee become: self ]
+		on: MethodInCallStackToBecomeInvalid
+		do: [ :anError | anError resume ]"
+	
+	[self become: (UsedCashier with: aCart thisCreditCard: aCreditCard )]
+		on:MethodInCallStackToBecomeInvalid
+		do: [ :anError | anError resume ]
 	! !
+
+
+!NewCashier methodsFor: 'consults' stamp: 'cf 6/15/2019 09:19:16'!
+checkForExpiredCard
+	(aCreditCard isItExpired: (GregorianMonthOfYear current))ifTrue: [^self signalTheCardIsExpired]! !
+
+!NewCashier methodsFor: 'consults' stamp: 'cf 6/15/2019 09:55:08'!
+totalCharged
+	^0*peso! !
+
+
+!NewCashier methodsFor: 'signals' stamp: 'cf 6/15/2019 09:17:46'!
+signalTheCardIsExpired
+	^self error: self class errorTarjetaVencida.! !
 
 
 !NewCashier methodsFor: 'initialization' stamp: 'j 6/9/2019 22:20:31'!
@@ -500,10 +533,15 @@ with: thisCart thisCreditCard: creditCard
 	(thisCart isEmpty) ifTrue: [^CashierState new signalEmptyCart ].
 	^self new initializeWith: thisCart andThis: creditCard ! !
 
+
+!NewCashier class methodsFor: 'error' stamp: 'cf 6/15/2019 09:18:14'!
+errorTarjetaVencida
+	^'La tarjeta se encuentra vencida'.! !
+
 
 !classDefinition: #UsedCashier category: #TusLibros!
 CashierState subclass: #UsedCashier
-	instanceVariableNames: ''
+	instanceVariableNames: 'sellBook'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibros'!
@@ -513,15 +551,21 @@ signalItsAlreadyCheckOut
 	^self error: self class errorCarritoyacobrado.! !
 
 
+!UsedCashier methodsFor: 'consults' stamp: 'cf 6/15/2019 09:25:56'!
+totalCharged
+	^ sellBook .! !
+
+
 !UsedCashier methodsFor: 'charging' stamp: 'cf 6/8/2019 21:23:20'!
 checkOutCart
 	^self signalItsAlreadyCheckOut! !
 
 
-!UsedCashier methodsFor: 'initialization' stamp: 'cf 6/8/2019 21:23:51'!
+!UsedCashier methodsFor: 'initialization' stamp: 'cf 6/15/2019 09:25:15'!
 initializeWith: thisCart andThis: creditCard
 	aCart := thisCart .
-	aCreditCard := creditCard .! !
+	aCreditCard := creditCard .
+	sellBook := aCart cartTotalAmount .! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -645,15 +689,6 @@ invalidCreditCardOwnerNameErrorMessage
 	! !
 
 
-!MerchantProcessorProxy methodsFor: 'verifications' stamp: 'j 6/9/2019 22:42:32'!
-verifyAmount: anAmount
-
-	[anAmount > 999999999999999] ifTrue: [self error: self invalidAmountErrorMessage].
-	
-	
-
-	! !
-
 !MerchantProcessorProxy methodsFor: 'verifications' stamp: 'j 6/10/2019 00:47:42'!
 verifyCardExpirationDate: aCard
 
@@ -676,6 +711,15 @@ verifyCreditCardDetails: aCreditCard.
 		self verifyCardNumber: aCreditCard cardNumber.		
 	! !
 
+!MerchantProcessorProxy methodsFor: 'verifications' stamp: 'cf 6/15/2019 09:38:53'!
+verifyIfItsAValidAmount: anAmount
+
+	(anAmount > (999999999999999*peso)) ifTrue: [self error: self invalidAmountErrorMessage].
+	
+	
+
+	! !
+
 !MerchantProcessorProxy methodsFor: 'verifications' stamp: 'j 6/9/2019 22:57:29'!
 verifyOwnerName: aCard
 
@@ -687,11 +731,11 @@ verifyOwnerName: aCard
 	! !
 
 
-!MerchantProcessorProxy methodsFor: 'operations' stamp: 'j 6/9/2019 22:39:23'!
+!MerchantProcessorProxy methodsFor: 'operations' stamp: 'cf 6/15/2019 09:36:51'!
 checkCreditCard: aCreditCard andAmount: anAmount
 
 	self verifyCreditCardDetails: aCreditCard.
-	self verifyAmount: anAmount.
+	self verifyIfItsAValidAmount:  (anAmount ).
 
 	! !
 
@@ -705,3 +749,11 @@ MerchantProcessorProxy class
 cardIsExpiredError
 
 	^'the credit card has expired already'! !
+
+
+!classDefinition: #RestInterface category: #TusLibros!
+Object subclass: #RestInterface
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'TusLibros'!
