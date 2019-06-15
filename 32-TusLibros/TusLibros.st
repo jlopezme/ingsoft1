@@ -293,6 +293,14 @@ validCreditCard
 	! !
 
 
+!classDefinition: #RestInterfaceTest category: #TusLibros!
+TestCase subclass: #RestInterfaceTest
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'TusLibros'!
+
+
 !classDefinition: #Cart category: #TusLibros!
 Object subclass: #Cart
 	instanceVariableNames: 'catalog items'
@@ -485,17 +493,13 @@ CashierState subclass: #NewCashier
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!NewCashier methodsFor: 'charging' stamp: 'cf 6/15/2019 09:45:45'!
+!NewCashier methodsFor: 'charging' stamp: 'cf 6/15/2019 10:09:08'!
 checkOutCart
 	
 	self checkForExpiredCard.
 	
 	aMerchantProcessor checkCreditCard: aCreditCard andAmount: self cartTotalAmount .
-	
-	"[ originalDecoratee become: self ]
-		on: MethodInCallStackToBecomeInvalid
-		do: [ :anError | anError resume ]"
-	
+
 	[self become: (UsedCashier with: aCart thisCreditCard: aCreditCard )]
 		on:MethodInCallStackToBecomeInvalid
 		do: [ :anError | anError resume ]
@@ -753,7 +757,75 @@ cardIsExpiredError
 
 !classDefinition: #RestInterface category: #TusLibros!
 Object subclass: #RestInterface
-	instanceVariableNames: ''
+	instanceVariableNames: 'currentID cartsByID lastTimeUSedByID catalogue'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibros'!
+
+!RestInterface methodsFor: 'initialization' stamp: 'cf 6/15/2019 11:09:02'!
+usingThisCatalouge: aCatalogue
+	catalogue := aCatalogue .
+	currentID :=1.
+	cartsByID := Dictionary new.
+	lastTimeUSedByID := Dictionary new.! !
+
+
+!RestInterface methodsFor: 'resources' stamp: 'cf 6/15/2019 11:54:52'!
+addToCart:cartID isbnProduct:isbn productQuantity: quantity
+	"la interfaz debe chequear que el cartID debe ser valido,si trato de agregar un producto invalido lo hago saltar a la interfaz"
+	"En caso de éxito: 0|OK
+	 En caso de error: 1|DESCRIPCION_DE_ERROR"
+	|cartForID|
+	self checkForValidID: cartID .
+	cartForID := cartsByID at: cartID .
+	(self checkIsbn:isbn ) ifTrue:[
+		cartForID add:quantity of:isbn .
+		lastTimeUSedByID at:cartID put: (Date now).
+		^self succesMessageWith:'OK'. ] 
+		 ifFalse: [
+			|errorMessage|
+			errorMessage := (cartForID add:quantity of:isbn ) messageText .
+			self createErrorWithDescription: errorMessage ].
+	! !
+
+!RestInterface methodsFor: 'resources' stamp: 'cf 6/15/2019 10:17:02'!
+checkOutCart: cartId ccn: creditCardNumber cced: creditCardExpirationDate cco: creditCardOwner! !
+
+!RestInterface methodsFor: 'resources' stamp: 'cf 6/15/2019 11:14:02'!
+createCart
+	|newCart cartID|
+	newCart := Cart acceptingItemsOf: catalogue .
+	cartID := currentID .
+	self nextValidID.
+	cartID at: cartID put: newCart .
+	lastTimeUSedByID at: cartID put: (Date now).
+	^cartID.! !
+
+!RestInterface methodsFor: 'resources' stamp: 'cf 6/15/2019 10:15:09'!
+listCart:cartId ! !
+
+!RestInterface methodsFor: 'resources' stamp: 'cf 6/15/2019 10:18:03'!
+listPurchases: clientId  password: passwordClient! !
+
+
+
+!RestInterface methodsFor: 'validations' stamp: 'cf 6/15/2019 11:35:14'!
+checkForValidID: cartID 
+	(cartsByID includesKey: cartID ) ifFalse: [^self createErrorWithDescription:'Invalid ID']! !
+
+
+!RestInterface methodsFor: 'private' stamp: 'cf 6/15/2019 11:48:55'!
+checkIsbn: isbn
+	^ catalogue includesKey: isbn .! !
+
+!RestInterface methodsFor: 'private' stamp: 'cf 6/15/2019 11:35:35'!
+createErrorWithDescription: errorMessage
+	^'1|',errorMessage ! !
+
+!RestInterface methodsFor: 'private' stamp: 'cf 6/15/2019 11:13:36'!
+nextValidID
+	currentID := currentID +1.! !
+
+!RestInterface methodsFor: 'private' stamp: 'cf 6/15/2019 11:49:35'!
+succesMessageWith: thisMessage
+	^'0|', thisMessage .! !
