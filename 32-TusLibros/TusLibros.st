@@ -295,10 +295,65 @@ validCreditCard
 
 !classDefinition: #RestInterfaceTest category: #TusLibros!
 TestCase subclass: #RestInterfaceTest
-	instanceVariableNames: ''
+	instanceVariableNames: 'userDataBase catalogue restinteface'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibros'!
+
+!RestInterfaceTest methodsFor: 'setUp' stamp: 'cf 6/17/2019 16:32:50'!
+createDatabaseAndCatalogue
+		|userDatabase catalog|
+		catalog := Dictionary new.
+		catalog at: 'Pelota' put: (3 * peso ).
+		catalog at: 'Goma' put: (4 * peso).
+		catalogue := catalog.
+		userDatabase := Dictionary new.
+		userDatabase at: '0000' put: 'Chuck Norris'.
+		userDatabase at: '0001' put: 'Keanu Reeves'.
+		userDataBase := userDatabase.
+		restinteface := RestInterface with: catalog .! !
+
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/17/2019 16:45:57'!
+clientID: clientID clientPass: clientPass
+	|clientpass|
+	^ ((self validID:clientID ) and:[ (clientpass _ (userDataBase at: clientID)) = clientPass ]).! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/17/2019 16:50:53'!
+createCart
+	^ restinteface createCart.! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/17/2019 16:24:53'!
+validID: clientID
+	^ userDataBase includesKey:clientID ! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/17/2019 16:25:32'!
+validPass: clientPass
+	^ userDataBase includes: clientPass .! !
+
+
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/17/2019 16:51:10'!
+test01AValidLogCanCreateACartWithRightMessage
+	
+	|message |
+	self createDatabaseAndCatalogue.
+	(self clientID:'0000' clientPass:'Chuck Norris') ifTrue: [ message := self createCart ].
+	self assert: (message ) equals: '0|1'.! !
+
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/17/2019 16:51:20'!
+test02WhenTryToCreateACartWithWronLogRaiseAnError
+	
+	|message |
+	self createDatabaseAndCatalogue.
+	(self clientID:'0001' clientPass:'Chuck Norris') ifTrue: [ message := self createCart .]
+		ifFalse: [ message := restinteface createErrorWithDescription: 'Invalid Log'].
+	self assert: (message ) equals: '1|Invalid Log'.! !
+
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/17/2019 16:50:08'!
+test03
+	"el sistema puede agregar un producto al carrito de forma correcta"
+	self createDatabaseAndCatalogue.
+	! !
 
 
 !classDefinition: #Cart category: #TusLibros!
@@ -449,9 +504,9 @@ checkOutCart
 cartTotalAmount
 	^ aCart cartTotalAmount.! !
 
-!CashierState methodsFor: 'consults' stamp: 'cf 6/9/2019 13:01:56'!
+!CashierState methodsFor: 'consults' stamp: 'cf 6/17/2019 15:50:22'!
 listCart
-	"0|ISBN_1|QUANTITY_1|ISBN_2|QUANTITY_2|....|ISBN_N|QUANTITY_N"
+	
 	|listCart listCartFormated|
 	listCartFormated := ReadWriteStream on: String new.
 	listCart := aCart listCart .
@@ -461,9 +516,9 @@ listCart
 				listCartFormated nextPutAll: '|', (listCart nextLine) , '|', (listCart nextLine ).].
 	^listCartFormated 			! !
 
-!CashierState methodsFor: 'consults' stamp: 'cf 6/9/2019 12:04:03'!
+!CashierState methodsFor: 'consults' stamp: 'cf 6/17/2019 15:50:28'!
 listPurchases
-	"0|ISBN_1|QUANTITY_1|ISBN_2|QUANTITY_2|....|ISBN_N|QUANTITY_N|TOTAL_AMOUNT"
+	
 	|cashierList totalAmount|
 	cashierList := self listCart .
 	totalAmount := self cartTotalAmount .
@@ -762,7 +817,7 @@ Object subclass: #RestInterface
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!RestInterface methodsFor: 'initialization' stamp: 'cf 6/15/2019 11:09:02'!
+!RestInterface methodsFor: 'initialization' stamp: 'cf 6/17/2019 16:12:54'!
 usingThisCatalouge: aCatalogue
 	catalogue := aCatalogue .
 	currentID :=1.
@@ -770,11 +825,9 @@ usingThisCatalouge: aCatalogue
 	lastTimeUSedByID := Dictionary new.! !
 
 
-!RestInterface methodsFor: 'resources' stamp: 'cf 6/15/2019 11:54:52'!
+!RestInterface methodsFor: 'resources' stamp: 'cf 6/17/2019 15:41:28'!
 addToCart:cartID isbnProduct:isbn productQuantity: quantity
-	"la interfaz debe chequear que el cartID debe ser valido,si trato de agregar un producto invalido lo hago saltar a la interfaz"
-	"En caso de éxito: 0|OK
-	 En caso de error: 1|DESCRIPCION_DE_ERROR"
+	
 	|cartForID|
 	self checkForValidID: cartID .
 	cartForID := cartsByID at: cartID .
@@ -791,18 +844,20 @@ addToCart:cartID isbnProduct:isbn productQuantity: quantity
 !RestInterface methodsFor: 'resources' stamp: 'cf 6/15/2019 10:17:02'!
 checkOutCart: cartId ccn: creditCardNumber cced: creditCardExpirationDate cco: creditCardOwner! !
 
-!RestInterface methodsFor: 'resources' stamp: 'cf 6/15/2019 11:14:02'!
+!RestInterface methodsFor: 'resources' stamp: 'cf 6/17/2019 16:38:02'!
 createCart
 	|newCart cartID|
 	newCart := Cart acceptingItemsOf: catalogue .
 	cartID := currentID .
 	self nextValidID.
-	cartID at: cartID put: newCart .
-	lastTimeUSedByID at: cartID put: (Date now).
-	^cartID.! !
+	cartsByID at: cartID put: newCart .
+	lastTimeUSedByID at: cartID put: (GregorianDateTime now).
+	^self succesMessageWith: (cartID asString ).! !
 
-!RestInterface methodsFor: 'resources' stamp: 'cf 6/15/2019 10:15:09'!
-listCart:cartId ! !
+!RestInterface methodsFor: 'resources' stamp: 'cf 6/17/2019 15:56:56'!
+listCart:cartID 
+	(cartsByID includesKey: cartID ) ifTrue: [ self succesMessageWith: ((self format: ((cartsByID at: cartID )listCart) ) content ) ]
+			 ifFalse: [ ^self createErrorWithDescription: 'Invalid cartID'.]! !
 
 !RestInterface methodsFor: 'resources' stamp: 'cf 6/15/2019 10:18:03'!
 listPurchases: clientId  password: passwordClient! !
@@ -822,6 +877,15 @@ checkIsbn: isbn
 createErrorWithDescription: errorMessage
 	^'1|',errorMessage ! !
 
+!RestInterface methodsFor: 'private' stamp: 'cf 6/17/2019 15:54:56'!
+format: listCart
+	| listCartFormated|
+	listCartFormated := ReadWriteStream on: String new.
+	listCart reset.
+	[(listCart peek) notNil ]whileTrue: [
+				listCartFormated nextPutAll: '|', (listCart nextLine) , '|', (listCart nextLine ).].
+	^listCartFormated 			! !
+
 !RestInterface methodsFor: 'private' stamp: 'cf 6/15/2019 11:13:36'!
 nextValidID
 	currentID := currentID +1.! !
@@ -829,3 +893,13 @@ nextValidID
 !RestInterface methodsFor: 'private' stamp: 'cf 6/15/2019 11:49:35'!
 succesMessageWith: thisMessage
 	^'0|', thisMessage .! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'RestInterface class' category: #TusLibros!
+RestInterface class
+	instanceVariableNames: ''!
+
+!RestInterface class methodsFor: 'instance creation' stamp: 'cf 6/17/2019 16:14:26'!
+with: acatalogue
+	^self new usingThisCatalouge: acatalogue .! !
