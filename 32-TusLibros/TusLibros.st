@@ -314,14 +314,50 @@ createDatabaseAndCatalogue
 		restinteface := RestInterface with: catalog .! !
 
 
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 15:22:35'!
+add: isbn quantity: isbnQuantity to: cartID 
+	|cart|
+	"terminar el refacto de cantidades"
+	cart:= restinteface getCartBy:cartID .
+	cart add: 1 of: isbn .
+	^ restinteface succesMessageWith: 'OK'.! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 15:20:08'!
+add: isbn to: cartID 
+	|cart|
+	cart:= restinteface getCartBy:cartID .
+	cart add: 1 of: isbn .
+	^ restinteface succesMessageWith: 'OK'.! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 15:20:23'!
+add: isbn toCart: cartID
+	self checkIfValidCartID: cartID .
+	^self add:isbn to:cartID .
+	! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 15:09:24'!
+checkIfValidCartID: cartID 
+	(restinteface checkForValidID: cartID ).! !
+
 !RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/17/2019 16:45:57'!
 clientID: clientID clientPass: clientPass
 	|clientpass|
 	^ ((self validID:clientID ) and:[ (clientpass _ (userDataBase at: clientID)) = clientPass ]).! !
 
-!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/17/2019 16:50:53'!
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 14:47:50'!
 createCart
-	^ restinteface createCart.! !
+	^restinteface createCart .! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 14:45:44'!
+createCart: clientID clientPass: clientPass
+	(self clientID:clientID clientPass:clientPass )ifTrue: [ ^self createCart .]
+		ifFalse: [ ^ restinteface createErrorWithDescription: 'Invalid Log'].! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 15:04:41'!
+getID: anID
+	|numberID |
+	numberID :=( anID at:3) digitValue.
+	^numberID ! !
 
 !RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/17/2019 16:24:53'!
 validID: clientID
@@ -332,28 +368,32 @@ validPass: clientPass
 	^ userDataBase includes: clientPass .! !
 
 
-!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/17/2019 16:51:10'!
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/18/2019 14:46:43'!
 test01AValidLogCanCreateACartWithRightMessage
 	
 	|message |
 	self createDatabaseAndCatalogue.
-	(self clientID:'0000' clientPass:'Chuck Norris') ifTrue: [ message := self createCart ].
+	message := self createCart: '0000' clientPass: 'Chuck Norris'.
 	self assert: (message ) equals: '0|1'.! !
 
-!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/17/2019 16:51:20'!
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/18/2019 14:46:01'!
 test02WhenTryToCreateACartWithWronLogRaiseAnError
 	
 	|message |
 	self createDatabaseAndCatalogue.
-	(self clientID:'0001' clientPass:'Chuck Norris') ifTrue: [ message := self createCart .]
-		ifFalse: [ message := restinteface createErrorWithDescription: 'Invalid Log'].
+	message := self createCart: '0001' clientPass:'Chuck Norris'.	
 	self assert: (message ) equals: '1|Invalid Log'.! !
 
-!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/17/2019 16:50:08'!
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/18/2019 15:17:05'!
 test03
 	"el sistema puede agregar un producto al carrito de forma correcta"
+	"cartId: Id del carrito creado con /createCart
+	bookIsbn: ISBN del libro que se desea agregar. Debe ser un ISBN de la editorial
+	bookQuantity:"
+	|newCartID message|
 	self createDatabaseAndCatalogue.
-	! !
+	newCartID := self getID: (self createCart: '0001' clientPass:'Keanu Reeves')  .
+	message := self add: 'Pelota' toCart: newCartID .! !
 
 
 !classDefinition: #Cart category: #TusLibros!
@@ -885,6 +925,11 @@ format: listCart
 	[(listCart peek) notNil ]whileTrue: [
 				listCartFormated nextPutAll: '|', (listCart nextLine) , '|', (listCart nextLine ).].
 	^listCartFormated 			! !
+
+!RestInterface methodsFor: 'private' stamp: 'cf 6/18/2019 15:13:31'!
+getCartBy: cartID 
+	(cartsByID includesKey: cartID ) ifTrue: [^ cartsByID at: cartID .]
+		 ifFalse: [^self createErrorWithDescription: 'Invalid CartID'.]! !
 
 !RestInterface methodsFor: 'private' stamp: 'cf 6/15/2019 11:13:36'!
 nextValidID
