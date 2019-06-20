@@ -314,13 +314,15 @@ createDatabaseAndCatalogue
 		restinteface := RestInterface with: catalog .! !
 
 
-!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 15:22:35'!
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/20/2019 11:19:57'!
 add: isbn quantity: isbnQuantity to: cartID 
 	|cart|
-	"terminar el refacto de cantidades"
+	(self  checkIfValidCartID: cartID) ifFalse: [^self createErrorWithDescription:'Invalid ID'].
+	(self  checkForValidIsbn: isbn) ifFalse: [^ self createErrorWithDescription: 'Invalid ISBN'].
+	(self checkForInvalidQUantity:isbnQuantity ) ifTrue:  [^ self createErrorWithDescription: 'Invalid Quantity'.].
 	cart:= restinteface getCartBy:cartID .
-	cart add: 1 of: isbn .
-	^ restinteface succesMessageWith: 'OK'.! !
+	cart add: isbnQuantity of: isbn .
+	^ restinteface succesMessageWith: '|OK'.! !
 
 !RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 15:20:08'!
 add: isbn to: cartID 
@@ -335,9 +337,21 @@ add: isbn toCart: cartID
 	^self add:isbn to:cartID .
 	! !
 
-!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 15:09:24'!
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/20/2019 11:19:30'!
+checkForInvalidQUantity: aQuantity 
+	^ aQuantity < 1.! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/20/2019 10:32:32'!
+checkForValidID: cartID 
+	^restinteface checkForValidID: cartID.! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/20/2019 11:13:28'!
+checkForValidIsbn: anISBN 
+	^(restinteface checkIsbn: anISBN) ! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/20/2019 11:13:01'!
 checkIfValidCartID: cartID 
-	(restinteface checkForValidID: cartID ).! !
+	^(restinteface checkForValidID: cartID ) ! !
 
 !RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/17/2019 16:45:57'!
 clientID: clientID clientPass: clientPass
@@ -353,11 +367,23 @@ createCart: clientID clientPass: clientPass
 	(self clientID:clientID clientPass:clientPass )ifTrue: [ ^self createCart .]
 		ifFalse: [ ^ restinteface createErrorWithDescription: 'Invalid Log'].! !
 
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/20/2019 11:20:33'!
+createErrorWithDescription: aMessage
+	^ restinteface createErrorWithDescription: aMessage .! !
+
 !RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 15:04:41'!
 getID: anID
 	|numberID |
 	numberID :=( anID at:3) digitValue.
 	^numberID ! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/20/2019 11:22:39'!
+listCart: cartID
+	| cartList |
+	(self checkForValidID: cartID) ifFalse: [^self createErrorWithDescription: 'Invalid CartID'].
+	cartList := restinteface listCart: cartID .
+	^cartList 	
+	! !
 
 !RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/17/2019 16:24:53'!
 validID: clientID
@@ -384,16 +410,55 @@ test02WhenTryToCreateACartWithWronLogRaiseAnError
 	message := self createCart: '0001' clientPass:'Chuck Norris'.	
 	self assert: (message ) equals: '1|Invalid Log'.! !
 
-!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/18/2019 15:17:05'!
-test03
-	"el sistema puede agregar un producto al carrito de forma correcta"
-	"cartId: Id del carrito creado con /createCart
-	bookIsbn: ISBN del libro que se desea agregar. Debe ser un ISBN de la editorial
-	bookQuantity:"
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/20/2019 10:14:29'!
+test03WhenAddAValidItemItReturnSuccesMessage
 	|newCartID message|
 	self createDatabaseAndCatalogue.
 	newCartID := self getID: (self createCart: '0001' clientPass:'Keanu Reeves')  .
-	message := self add: 'Pelota' toCart: newCartID .! !
+	message := self add: 'Pelota' quantity: 2 to: newCartID .
+	self assert: (message ) equals: '0|OK' ! !
+
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/20/2019 11:14:39'!
+test04WhenAddAnInvalidItemCreateAnError
+	
+	|newCartID message|
+	self createDatabaseAndCatalogue.
+	newCartID := self getID: (self createCart: '0001' clientPass:'Keanu Reeves')  .
+	message := self add: 'Lápiz' quantity: 2 to: newCartID .
+	self assert: (message ) equals: '1|Invalid ISBN' ! !
+
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/20/2019 11:17:00'!
+test05WhenAddAnInvalidQuantityCreateAnError
+	
+	|newCartID message|
+	self createDatabaseAndCatalogue.
+	newCartID := self getID: (self createCart: '0001' clientPass:'Keanu Reeves')  .
+	message := self add: 'Goma' quantity: 0 to: newCartID .
+	self assert: (message ) equals: '1|Invalid Quantity' ! !
+
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/20/2019 11:16:04'!
+test06TheInterfaceCreateAValidListCartWithAValidCartID
+	
+	|newCartID message|
+	self createDatabaseAndCatalogue.
+	newCartID := self getID: (self createCart: '0001' clientPass:'Keanu Reeves')  .
+	self add: 'Pelota' quantity: 2 to: newCartID .
+	message := self listCart: newCartID .
+	self assert: (message ) equals: '0|Pelota|2'.! !
+
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/20/2019 11:21:46'!
+test07WhenTryToListAnInvalidCartIDReturnError
+	|newCartID message|
+	self createDatabaseAndCatalogue.
+	newCartID := self getID: (self createCart: '0001' clientPass:'Keanu Reeves')  .
+	self add: 'Pelota' quantity: 2 to: newCartID .
+	message := self listCart: 2 .
+	self assert: (message ) equals: '1|Invalid CartID'.! !
+
+
+!RestInterfaceTest methodsFor: 'printing' stamp: 'cf 6/20/2019 11:18:35'!
+checkForInvalidQUantity
+	self shouldBeImplemented.! !
 
 
 !classDefinition: #Cart category: #TusLibros!
@@ -884,7 +949,7 @@ addToCart:cartID isbnProduct:isbn productQuantity: quantity
 !RestInterface methodsFor: 'resources' stamp: 'cf 6/15/2019 10:17:02'!
 checkOutCart: cartId ccn: creditCardNumber cced: creditCardExpirationDate cco: creditCardOwner! !
 
-!RestInterface methodsFor: 'resources' stamp: 'cf 6/17/2019 16:38:02'!
+!RestInterface methodsFor: 'resources' stamp: 'cf 6/20/2019 10:46:31'!
 createCart
 	|newCart cartID|
 	newCart := Cart acceptingItemsOf: catalogue .
@@ -892,26 +957,25 @@ createCart
 	self nextValidID.
 	cartsByID at: cartID put: newCart .
 	lastTimeUSedByID at: cartID put: (GregorianDateTime now).
-	^self succesMessageWith: (cartID asString ).! !
+	^self succesMessageWith: ('|', (cartID asString) ).! !
 
-!RestInterface methodsFor: 'resources' stamp: 'cf 6/17/2019 15:56:56'!
+!RestInterface methodsFor: 'resources' stamp: 'cf 6/20/2019 10:41:17'!
 listCart:cartID 
-	(cartsByID includesKey: cartID ) ifTrue: [ self succesMessageWith: ((self format: ((cartsByID at: cartID )listCart) ) content ) ]
-			 ifFalse: [ ^self createErrorWithDescription: 'Invalid cartID'.]! !
+	^self succesMessageWith: ((self format: ((cartsByID at: cartID )listCart) ) contents )! !
 
 !RestInterface methodsFor: 'resources' stamp: 'cf 6/15/2019 10:18:03'!
 listPurchases: clientId  password: passwordClient! !
 
 
 
-!RestInterface methodsFor: 'validations' stamp: 'cf 6/15/2019 11:35:14'!
+!RestInterface methodsFor: 'validations' stamp: 'cf 6/20/2019 11:10:54'!
 checkForValidID: cartID 
-	(cartsByID includesKey: cartID ) ifFalse: [^self createErrorWithDescription:'Invalid ID']! !
+	^cartsByID includesKey: cartID ! !
 
 
-!RestInterface methodsFor: 'private' stamp: 'cf 6/15/2019 11:48:55'!
+!RestInterface methodsFor: 'private' stamp: 'cf 6/20/2019 11:11:58'!
 checkIsbn: isbn
-	^ catalogue includesKey: isbn .! !
+	^(catalogue includesKey: isbn)! !
 
 !RestInterface methodsFor: 'private' stamp: 'cf 6/15/2019 11:35:35'!
 createErrorWithDescription: errorMessage
@@ -926,18 +990,17 @@ format: listCart
 				listCartFormated nextPutAll: '|', (listCart nextLine) , '|', (listCart nextLine ).].
 	^listCartFormated 			! !
 
-!RestInterface methodsFor: 'private' stamp: 'cf 6/18/2019 15:13:31'!
+!RestInterface methodsFor: 'private' stamp: 'cf 6/20/2019 10:33:07'!
 getCartBy: cartID 
-	(cartsByID includesKey: cartID ) ifTrue: [^ cartsByID at: cartID .]
-		 ifFalse: [^self createErrorWithDescription: 'Invalid CartID'.]! !
+	^cartsByID at: cartID .! !
 
 !RestInterface methodsFor: 'private' stamp: 'cf 6/15/2019 11:13:36'!
 nextValidID
 	currentID := currentID +1.! !
 
-!RestInterface methodsFor: 'private' stamp: 'cf 6/15/2019 11:49:35'!
+!RestInterface methodsFor: 'private' stamp: 'cf 6/20/2019 10:44:49'!
 succesMessageWith: thisMessage
-	^'0|', thisMessage .! !
+	^'0', thisMessage .! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
