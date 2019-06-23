@@ -295,12 +295,12 @@ validCreditCard
 
 !classDefinition: #RestInterfaceTest category: #TusLibros!
 TestCase subclass: #RestInterfaceTest
-	instanceVariableNames: 'userDataBase catalogue restinteface'
+	instanceVariableNames: 'userDataBase catalogue restinteface clientPurchasesByID actualTime lastTimeUsedCartByID'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!RestInterfaceTest methodsFor: 'setUp' stamp: 'cf 6/17/2019 16:32:50'!
+!RestInterfaceTest methodsFor: 'setUp' stamp: 'cf 6/23/2019 17:05:11'!
 createDatabaseAndCatalogue
 		|userDatabase catalog|
 		catalog := Dictionary new.
@@ -311,22 +311,27 @@ createDatabaseAndCatalogue
 		userDatabase at: '0000' put: 'Chuck Norris'.
 		userDatabase at: '0001' put: 'Keanu Reeves'.
 		userDataBase := userDatabase.
-		restinteface := RestInterface with: catalog .! !
+		restinteface := RestInterface with: catalog .
+		clientPurchasesByID := Dictionary new.
+		lastTimeUsedCartByID := Dictionary new.
+		actualTime := TimeOfDay now.! !
 
 !RestInterfaceTest methodsFor: 'setUp' stamp: 'cf 6/20/2019 11:34:19'!
 validCreditCard
 ^CreditCard firstname: 'Alan' lastName:'Kay'  expiration:((GregorianMonthOfYear current) next )  cardNumber: 4378282246310005! !
 
 
-!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/20/2019 11:19:57'!
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/23/2019 17:00:05'!
 add: isbn quantity: isbnQuantity to: cartID 
 	|cart|
 	(self  checkIfValidCartID: cartID) ifFalse: [^self createErrorWithDescription:'Invalid ID'].
 	(self  checkForValidIsbn: isbn) ifFalse: [^ self createErrorWithDescription: 'Invalid ISBN'].
 	(self checkForInvalidQUantity:isbnQuantity ) ifTrue:  [^ self createErrorWithDescription: 'Invalid Quantity'.].
-	cart:= restinteface getCartBy:cartID .
+	(self checkForExpired: cartID) ifFalse: [^ self createErrorWithDescription: (self expiredCart:cartID )].
+	cart:= self getCartByID: cartID .
 	cart add: isbnQuantity of: isbn .
-	^ restinteface succesMessageWith: '|OK'.! !
+	self updateLastTimeUse:cartID.
+	^ self succesMessageWith: '|OK'.! !
 
 !RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 15:20:08'!
 add: isbn to: cartID 
@@ -339,6 +344,14 @@ add: isbn to: cartID
 add: isbn toCart: cartID
 	self checkIfValidCartID: cartID .
 	^self add:isbn to:cartID .
+	! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/23/2019 17:04:49'!
+checkForExpired: cartID 
+	|lastTimeUsed distance|
+	lastTimeUsed := lastTimeUsedCartByID at: cartID .
+	distance := (lastTimeUsed distanceTo: actualTime ) convertTo: minute .
+	^(distance < (30* minute)) .
 	! !
 
 !RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/20/2019 11:18:35'!
@@ -361,9 +374,12 @@ checkForValidIsbn: anISBN
 checkIfValidCartID: cartID 
 	^(restinteface checkForValidID: cartID ) ! !
 
-!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/20/2019 11:43:57'!
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/23/2019 17:08:33'!
 checkOutCart: cartID ccn: creditCardNumber cced: expirationDate cco: ownerName 
-	^restinteface checkOutCart: cartID ccn: creditCardNumber  cced: expirationDate  cco: ownerName ! !
+	|message|
+	message :=restinteface checkOutCart: cartID ccn: creditCardNumber  cced: expirationDate  cco: ownerName.
+	self updateLastTimeUse: cartID.
+	^message .! !
 
 !RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/17/2019 16:45:57'!
 clientID: clientID clientPass: clientPass
@@ -374,14 +390,32 @@ clientID: clientID clientPass: clientPass
 createCart
 	^restinteface createCart .! !
 
-!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 14:45:44'!
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/23/2019 16:33:45'!
 createCart: clientID clientPass: clientPass
-	(self clientID:clientID clientPass:clientPass )ifTrue: [ ^self createCart .]
-		ifFalse: [ ^ restinteface createErrorWithDescription: 'Invalid Log'].! !
+	(self clientID:clientID clientPass:clientPass )ifTrue: [
+		|cartID|
+		 cartID:=self createCart.
+		 clientPurchasesByID at:(clientID ) put: (self getID:cartID ).
+		 lastTimeUsedCartByID at: (self getID: cartID ) put: (TimeOfDay now).
+		^cartID.
+		]
+		ifFalse: [ ^ self createErrorWithDescription: 'Invalid Log'].! !
 
 !RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/20/2019 11:20:33'!
 createErrorWithDescription: aMessage
 	^ restinteface createErrorWithDescription: aMessage .! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/23/2019 16:55:54'!
+expiredCart: cartID 
+	^ 'The cart:', (cartID asString ), ' Is expired'.! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/23/2019 15:53:27'!
+getCartByClient: clientID 
+	^ clientPurchasesByID at: clientID .! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/23/2019 15:39:49'!
+getCartByID: cartID
+	^restinteface getCartBy: cartID .! !
 
 !RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/18/2019 15:04:41'!
 getID: anID
@@ -389,13 +423,39 @@ getID: anID
 	numberID :=( anID at:3) digitValue.
 	^numberID ! !
 
-!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/20/2019 11:22:39'!
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/23/2019 17:06:35'!
 listCart: cartID
 	| cartList |
 	(self checkForValidID: cartID) ifFalse: [^self createErrorWithDescription: 'Invalid CartID'].
 	cartList := restinteface listCart: cartID .
+	self updateLastTimeUse: cartID .
 	^cartList 	
 	! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/23/2019 16:03:24'!
+listPurchases: clientID password: clientPass 
+	(self clientID: clientID clientPass:clientPass ) ifTrue: [
+		|clientCart|
+		clientCart := self getCartByClient:clientID.
+		^ self listPurchasesBy: clientCart . 
+ 		] 
+		ifFalse: [^ self createErrorWithDescription: 'Loggin Error'.]! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/23/2019 15:58:58'!
+listPurchasesBy: clientCart 
+	^restinteface listPurchases: clientCart! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/23/2019 17:22:24'!
+passHalfOur
+  actualTime := actualTime next: (31 * minute).! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/23/2019 17:02:29'!
+succesMessageWith: succesMessage 
+	^ restinteface succesMessageWith: succesMessage .! !
+
+!RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/23/2019 17:00:23'!
+updateLastTimeUse: cartID 
+	lastTimeUsedCartByID at: cartID put: (TimeOfDay now).! !
 
 !RestInterfaceTest methodsFor: 'private' stamp: 'cf 6/17/2019 16:24:53'!
 validID: clientID
@@ -477,7 +537,7 @@ test08WhenCheckOutAValidCartAndCreditcardEmmitsTheIDOfTheTransaction
 	message := self checkOutCart: (newCartID) ccn: (4378282246310005)  cced: ((GregorianMonthOfYear current) next )  cco: ('Alan Kay') .
 	self assert: (message ) equals: '0|1'.! !
 
-!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/20/2019 13:01:05'!
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/23/2019 16:07:25'!
 test09TryToCheckOutAlreadyCheckOutCartRaiseAnError
 	|newCartID message |
 	
@@ -486,7 +546,38 @@ test09TryToCheckOutAlreadyCheckOutCartRaiseAnError
 	self add: 'Pelota' quantity: 2 to: newCartID .
 	self checkOutCart: (newCartID) ccn: (4378282246310005)  cced: ((GregorianMonthOfYear current) next )  cco: ('Alan Kay') .
 	message := self checkOutCart: (newCartID) ccn: (4378282246310005) cced:((GregorianMonthOfYear current) next )  cco: ('Alan Kay') .
-	self assert: (message ) equals: '1|Este Cajero ya cobro a su carrito'.! !
+	self assert: (message ) equals: '1|This cashier was already charge'.! !
+
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/23/2019 16:03:54'!
+test10AfterCheckingOutACartShowAllHisPurchasesWhenReciveListPurchases
+	|newCartID message|
+	self createDatabaseAndCatalogue.
+	newCartID := self getID: (self createCart: '0001' clientPass:'Keanu Reeves')  .
+	self add: 'Pelota' quantity: 2 to: newCartID .
+	self checkOutCart: (newCartID) ccn: (4378282246310005)  cced: ((GregorianMonthOfYear current) next )  cco: ('Alan Kay') .
+	message := self listPurchases: '0001' password:'Keanu Reeves' .
+	self assert: (message contents ) equals: '0|Pelota|2|6 pesos'.! !
+
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/23/2019 16:05:09'!
+test11WhenToDoListPurchasesWithWrongInformationAnErrorShowsWithHisDescription
+	
+	|newCartID message|
+	self createDatabaseAndCatalogue.
+	newCartID := self getID: (self createCart: '0001' clientPass:'Keanu Reeves')  .
+	self add: 'Pelota' quantity: 2 to: newCartID .
+	self checkOutCart: (newCartID) ccn: (4378282246310005)  cced: ((GregorianMonthOfYear current) next )  cco: ('Alan Kay') .
+	message := self listPurchases: '0002' password:'Keanu Reeves' .
+	self assert: (message contents ) equals: '1|Loggin Error'.! !
+
+!RestInterfaceTest methodsFor: 'test' stamp: 'cf 6/23/2019 17:26:19'!
+test12ACartAfter30MinutesOnlyShowListPurchases
+
+	|newCartID message|
+	self createDatabaseAndCatalogue.
+	newCartID := self getID: (self createCart: '0001' clientPass:'Keanu Reeves').
+	self passHalfOur.
+	message := self add: 'Pelota' quantity: 2 to: newCartID .
+	self assert: (message ) equals: ('1|The cart:',(newCartID asString ),' Is expired') ! !
 
 
 !classDefinition: #Cart category: #TusLibros!
@@ -765,9 +856,9 @@ initializeWith: thisCart andThis: creditCard
 UsedCashier class
 	instanceVariableNames: ''!
 
-!UsedCashier class methodsFor: 'error' stamp: 'cf 6/9/2019 09:57:58'!
+!UsedCashier class methodsFor: 'error' stamp: 'cf 6/23/2019 16:07:20'!
 errorCarritoyacobrado
-	^'Este Cajero ya cobro a su carrito'.! !
+	^'This cashier was already charge'.! !
 
 
 !UsedCashier class methodsFor: 'instance creation' stamp: 'cf 6/8/2019 21:30:00'!
@@ -949,23 +1040,22 @@ cardIsExpiredError
 
 !classDefinition: #RestInterface category: #TusLibros!
 Object subclass: #RestInterface
-	instanceVariableNames: 'currentID cartsByID lastTimeUSedByID catalogue currentTransactionID transactionsByID cashierByCartID'
+	instanceVariableNames: 'currentID cartsByID catalogue currentTransactionID transactionsByID cashierByCartID'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!RestInterface methodsFor: 'initialization' stamp: 'cf 6/20/2019 12:55:01'!
+!RestInterface methodsFor: 'initialization' stamp: 'cf 6/23/2019 16:29:32'!
 usingThisCatalouge: aCatalogue
 	catalogue := aCatalogue .
 	currentID :=1.
 	cartsByID := Dictionary new.
-	lastTimeUSedByID := Dictionary new.
 	transactionsByID := Dictionary new.
 	currentTransactionID :=1.
 	cashierByCartID := Dictionary new.! !
 
 
-!RestInterface methodsFor: 'resources' stamp: 'cf 6/17/2019 15:41:28'!
+!RestInterface methodsFor: 'resources' stamp: 'cf 6/23/2019 16:29:44'!
 addToCart:cartID isbnProduct:isbn productQuantity: quantity
 	
 	|cartForID|
@@ -973,7 +1063,6 @@ addToCart:cartID isbnProduct:isbn productQuantity: quantity
 	cartForID := cartsByID at: cartID .
 	(self checkIsbn:isbn ) ifTrue:[
 		cartForID add:quantity of:isbn .
-		lastTimeUSedByID at:cartID put: (Date now).
 		^self succesMessageWith:'OK'. ] 
 		 ifFalse: [
 			|errorMessage|
@@ -1001,23 +1090,22 @@ checkOutCart: cartId ccn: creditCardNumber cced: creditCardExpirationDate cco: c
 	cashierByCartID at: cartId put: cashier. 
 	^self succesMessageWith: ('|',(actualTransactionID asString ))  .! !
 
-!RestInterface methodsFor: 'resources' stamp: 'cf 6/20/2019 10:46:31'!
+!RestInterface methodsFor: 'resources' stamp: 'cf 6/23/2019 16:29:08'!
 createCart
 	|newCart cartID|
 	newCart := Cart acceptingItemsOf: catalogue .
 	cartID := currentID .
 	self nextValidID.
 	cartsByID at: cartID put: newCart .
-	lastTimeUSedByID at: cartID put: (GregorianDateTime now).
 	^self succesMessageWith: ('|', (cartID asString) ).! !
 
 !RestInterface methodsFor: 'resources' stamp: 'cf 6/20/2019 10:41:17'!
 listCart:cartID 
 	^self succesMessageWith: ((self format: ((cartsByID at: cartID )listCart) ) contents )! !
 
-!RestInterface methodsFor: 'resources' stamp: 'cf 6/15/2019 10:18:03'!
-listPurchases: clientId  password: passwordClient! !
-
+!RestInterface methodsFor: 'resources' stamp: 'cf 6/23/2019 15:47:02'!
+listPurchases: cartID
+	^ (self getCashierByCartID: cartID) listPurchases! !
 
 
 !RestInterface methodsFor: 'validations' stamp: 'cf 6/20/2019 11:10:54'!
@@ -1053,6 +1141,10 @@ getCartBy: cartID
 !RestInterface methodsFor: 'private' stamp: 'cf 6/20/2019 12:53:53'!
 getCashierByCartID: cartId
 	^ cashierByCartID at: cartId .! !
+
+!RestInterface methodsFor: 'private' stamp: 'cf 6/23/2019 16:19:39'!
+getTime
+	actualTime := TimeOfDay now.! !
 
 !RestInterface methodsFor: 'private' stamp: 'cf 6/15/2019 11:13:36'!
 nextValidID
