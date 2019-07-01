@@ -1,6 +1,6 @@
 !classDefinition: #TusLibrosClientWindow category: #TusLibrosClientServerDemo!
 Panel subclass: #TusLibrosClientWindow
-	instanceVariableNames: 'userID passUser logButton'
+	instanceVariableNames: 'logButton userIDmorph passUsermorph'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibrosClientServerDemo'!
@@ -53,7 +53,7 @@ build1stColumn2ndRow
 	^firstColumnLayoutOfSecondRow.
 	! !
 
-!TusLibrosClientWindow methodsFor: 'GUI building' stamp: 'CF 6/29/2019 17:22:55'!
+!TusLibrosClientWindow methodsFor: 'GUI building' stamp: 'cf 7/1/2019 19:23:53'!
 build2ndRow
 	"|  secondRowLayout |
 	showInTranscriptButton
@@ -69,28 +69,28 @@ build2ndRow
 	| secondtRowLayout |
 	
 	
-	passUser := TextModelMorph textProvider: self model textGetter: #sentenceText textSetter: #sentenceText:. 
-	passUser textMorph setProperty: #keyStroke: toValue: [ :key | passUser textMorph acceptContents ] .
-	passUser  borderWidth: 1; borderColor: Color black.
-	passUser emptyTextDisplayMessage: 'Enter user Password'.	
+	passUsermorph := TextModelMorph textProvider: self model textGetter: #sentenceText textSetter: #sentenceText:. 
+	passUsermorph textMorph setProperty: #keyStroke: toValue: [ :key | passUsermorph textMorph acceptContents ] .
+	passUsermorph  borderWidth: 1; borderColor: Color black.
+	passUsermorph emptyTextDisplayMessage: 'Enter user Password'.	
 			
 	secondtRowLayout := LayoutMorph newRow.
 	secondtRowLayout separation: 5;
 	padding: #left;
-	addMorph: passUser.
+	addMorph: passUsermorph.
 
 	^secondtRowLayout.! !
 
-!TusLibrosClientWindow methodsFor: 'GUI building' stamp: 'CF 6/30/2019 15:45:16'!
+!TusLibrosClientWindow methodsFor: 'GUI building' stamp: 'cf 7/1/2019 19:32:50'!
 buildMorphicWindow
-	userID := self createTextBoxWithTextPlaceHolder:'Enter User ID'.
-	passUser := self createTextBoxWithTextPlaceHolder: 'Enter User Password'.
+	userIDmorph := self createTextBoxWithTextPlaceHolder:'Enter User ID'.
+	passUsermorph := self createTextBoxWithTextPlaceHolder: 'Enter User Password'.
 	self layoutMorph beColumn;
 	separation: 1;
 	padding: #center;
-	addMorph: (self createRowWith: userID separationOf: 5  PaddingOf: #center);
-	addMorph: (self createRowWith: passUser separationOf: 5  PaddingOf: #center);
-	addMorph: (PluggableButtonMorph model: self model stateGetter: nil  action: #sendSubtringsRequest  label: 'Log in').
+	addMorph: (self createRowWith: userIDmorph separationOf: 5  PaddingOf: #center);
+	addMorph: (self createRowWith: passUsermorph separationOf: 5  PaddingOf: #center);
+	addMorph: (PluggableButtonMorph model: self model stateGetter: nil  action: #login  label: 'Log in').
 	
 	! !
 
@@ -104,10 +104,10 @@ createRowWith: layotToAdd separationOf: separationAmount PaddingOf: paddingOrien
 
 	^rowLayout.! !
 
-!TusLibrosClientWindow methodsFor: 'GUI building' stamp: 'CF 6/30/2019 16:02:12'!
+!TusLibrosClientWindow methodsFor: 'GUI building' stamp: 'cf 7/1/2019 19:28:25'!
 createTextBoxWithTextPlaceHolder: textPlaceHolder
 	|textBox|
-	textBox := TextModelMorph textProvider: self model textGetter: #sentenceText textSetter: #sentenceText:. 
+	textBox := TextModelMorph textProvider: self model textGetter: #userIDText textSetter: #userIDText:. 
 	textBox textMorph setProperty: #keyStroke: toValue: [ :key | textBox textMorph acceptContents ] .
 	textBox  borderWidth: 1; borderColor: Color black.
 	textBox emptyTextDisplayMessage: textPlaceHolder .
@@ -149,7 +149,7 @@ substringsListIndex: anIndex
 	selectedIndex := anIndex.! !
 
 
-!TusLibrosClientWindowModel methodsFor: 'initialization' stamp: 'CF 6/30/2019 16:13:10'!
+!TusLibrosClientWindowModel methodsFor: 'initialization' stamp: 'cf 7/1/2019 19:29:21'!
 initialize
 
 	listOfWords := OrderedCollection new.
@@ -157,7 +157,7 @@ initialize
 	selectedIndex:=0.
 	webClient := TusLibrosWebClient new.
 	userID := ''.
-	userPass := ''.! !
+	userPass := '1234'.! !
 
 
 !TusLibrosClientWindowModel methodsFor: 'TextModelMorphSelectors' stamp: 'NR 6/25/2019 21:43:32'!
@@ -171,10 +171,20 @@ sentenceText: aSentence
 	sentence:=aSentence.
 	^true.! !
 
+!TusLibrosClientWindowModel methodsFor: 'TextModelMorphSelectors' stamp: 'cf 7/1/2019 19:27:15'!
+userIDText
+	
+	^sentence.! !
 
-!TusLibrosClientWindowModel methodsFor: 'PluggableButtonSelectors' stamp: 'CF 6/30/2019 16:07:09'!
+!TusLibrosClientWindowModel methodsFor: 'TextModelMorphSelectors' stamp: 'cf 7/1/2019 19:27:46'!
+userIDText: userText
+	userID := userText.
+	^true.! !
+
+
+!TusLibrosClientWindowModel methodsFor: 'PluggableButtonSelectors' stamp: 'cf 7/1/2019 19:33:22'!
 login
-	! !
+	self halt .! !
 
 !TusLibrosClientWindowModel methodsFor: 'PluggableButtonSelectors' stamp: 'CF 6/30/2019 15:57:24'!
 sendSubtringsRequest
