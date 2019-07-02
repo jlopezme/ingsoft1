@@ -208,7 +208,7 @@ showWordInTranscript
 
 !classDefinition: #TusLibrosServerController category: #TusLibrosClientServerDemo!
 Object subclass: #TusLibrosServerController
-	instanceVariableNames: 'webServer port hiList'
+	instanceVariableNames: 'webServer port hiList tusLibrosSystem'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibrosClientServerDemo'!
@@ -229,12 +229,46 @@ stopListening
 	webServer stopListener! !
 
 
-!TusLibrosServerController methodsFor: 'initialization' stamp: 'NR 6/25/2019 19:15:47'!
+!TusLibrosServerController methodsFor: 'initialization' stamp: 'CF 7/2/2019 14:13:09'!
 initialize
 
 	hiList := self hiList.
 	
 	webServer := WebServer new listenOn: self port.
+	
+	tusLibrosSystem := TusLibrosSystemFacadeTest new setUp .
+	
+	webServer addService: '/createCart' action: [:request| |fields userID userPass message |
+	
+			[fields:= (request fields at:'fields') substrings.
+			userID := fields at: 1.
+			userPass := fields at: 2.
+			message := (self createCart: userID withPass: userPass) asString .
+			
+			request send200Response: (self succesMessage: message).
+			]
+			on:Error 
+			do: [ :anError |
+			request send404Response: ( self errorMessage: (anError messageText)) ]
+					].
+					
+	webServer addService: '/addToCart' action:[
+			:request| |fields cartId bookIsbn bookQuantity |
+	
+			[fields:= (request fields at:'fields') substrings.
+				self halt.
+			cartId := ((fields at: 1) at:1) digitValue .
+			bookIsbn := fields at: 2.
+			bookQuantity := ((fields at: 3) at:1) digitValue  .
+			self addToCart: cartId  bookIsbn: bookIsbn bookQuantity: bookQuantity .
+			
+			request send200Response: (self succesMessage: 'OK').
+			]
+			on:Error 
+			do: [ :anError |
+			request send404Response: ( self errorMessage: (anError messageText)) ]
+					].
+					
 	
 	webServer addService: '/sayHi' action:[:request |	
 		
@@ -264,6 +298,18 @@ port
 	! !
 
 
+!TusLibrosServerController methodsFor: 'private' stamp: 'CF 7/2/2019 13:49:40'!
+addToCart: cartId  bookIsbn: bookIsbn bookQuantity: bookQuantity 
+	^tusLibrosSystem addToCart: cartId bookIsbn: bookIsbn  bookQuantity: bookQuantity ! !
+
+!TusLibrosServerController methodsFor: 'private' stamp: 'CF 7/2/2019 11:24:56'!
+createCart: userID withPass: userPass
+	^tusLibrosSystem createCart: userID withPass: userPass ! !
+
+!TusLibrosServerController methodsFor: 'private' stamp: 'CF 7/2/2019 11:33:47'!
+errorMessage:message
+	^'1|',message ! !
+
 !TusLibrosServerController methodsFor: 'private' stamp: 'NR 6/24/2019 07:16:54'!
 hiList
 	
@@ -277,6 +323,10 @@ sayRandomHi
 	^hiList at: (hiList size atRandom).
 	! !
 
+!TusLibrosServerController methodsFor: 'private' stamp: 'CF 7/2/2019 11:39:47'!
+succesMessage: message
+	^'0|',message .! !
+
 
 !classDefinition: #TusLibrosWebClient category: #TusLibrosClientServerDemo!
 Object subclass: #TusLibrosWebClient
@@ -289,10 +339,6 @@ Object subclass: #TusLibrosWebClient
 correctlyEncodeSpacesForUrlRequestParameter: aParameter
 	
 	^ aParameter copyReplaceAll: ' ' with: '%20'. ! !
-
-!TusLibrosWebClient methodsFor: 'sending requests' stamp: 'CF 6/30/2019 16:09:41'!
-loginwithUserID: userID andPass: userPass
-! !
 
 !TusLibrosWebClient methodsFor: 'sending requests' stamp: 'NR 6/25/2019 22:25:21'!
 sendRequest: sentence
