@@ -229,7 +229,7 @@ stopListening
 	webServer stopListener! !
 
 
-!TusLibrosServerController methodsFor: 'initialization' stamp: 'CF 7/2/2019 14:13:09'!
+!TusLibrosServerController methodsFor: 'initialization' stamp: 'CF 7/3/2019 11:22:13'!
 initialize
 
 	hiList := self hiList.
@@ -245,7 +245,7 @@ initialize
 			userPass := fields at: 2.
 			message := (self createCart: userID withPass: userPass) asString .
 			
-			request send200Response: (self succesMessage: message).
+			request send200Response: (self succesMessage: ('|', message)).
 			]
 			on:Error 
 			do: [ :anError |
@@ -256,18 +256,33 @@ initialize
 			:request| |fields cartId bookIsbn bookQuantity |
 	
 			[fields:= (request fields at:'fields') substrings.
-				self halt.
-			cartId := ((fields at: 1) at:1) digitValue .
+			cartId := (fields at: 1) asNumber .
 			bookIsbn := fields at: 2.
-			bookQuantity := ((fields at: 3) at:1) digitValue  .
+			bookQuantity := (fields at: 3) asNumber  .
 			self addToCart: cartId  bookIsbn: bookIsbn bookQuantity: bookQuantity .
 			
-			request send200Response: (self succesMessage: 'OK').
+			request send200Response: (self succesMessage: '|OK').
 			]
 			on:Error 
 			do: [ :anError |
 			request send404Response: ( self errorMessage: (anError messageText)) ]
 					].
+	
+					
+	webServer addService: '/listCart' action: [
+			:request| |fields cartId message  |
+			self halt.
+			[fields:= (request fields at:'fields') substrings.
+			cartId := (fields at: 1) asNumber .
+			message := self listCart: cartId .			
+			request send200Response: (self succesMessage: message ).
+			]
+			on:Error 
+			do: [ :anError |
+			request send404Response: ( self errorMessage: (anError messageText)) ]
+		
+		].		
+					
 					
 	
 	webServer addService: '/sayHi' action:[:request |	
@@ -306,10 +321,6 @@ addToCart: cartId  bookIsbn: bookIsbn bookQuantity: bookQuantity
 createCart: userID withPass: userPass
 	^tusLibrosSystem createCart: userID withPass: userPass ! !
 
-!TusLibrosServerController methodsFor: 'private' stamp: 'CF 7/2/2019 11:33:47'!
-errorMessage:message
-	^'1|',message ! !
-
 !TusLibrosServerController methodsFor: 'private' stamp: 'NR 6/24/2019 07:16:54'!
 hiList
 	
@@ -317,15 +328,33 @@ hiList
 	
 	! !
 
+!TusLibrosServerController methodsFor: 'private' stamp: 'CF 7/3/2019 11:19:57'!
+listCart: cartID
+	
+	|content cartList|
+	self halt.
+	content :=tusLibrosSystem listCart: cartID .
+	cartList := ''.
+	content keysDo: [:aKey | 
+ 	cartList := cartList , '|', aKey ,'|', ((content at: aKey ) asString ).	
+	].
+	^cartList .! !
+
 !TusLibrosServerController methodsFor: 'private' stamp: 'NR 6/24/2019 07:15:43'!
 sayRandomHi
 	
 	^hiList at: (hiList size atRandom).
 	! !
 
-!TusLibrosServerController methodsFor: 'private' stamp: 'CF 7/2/2019 11:39:47'!
+
+!TusLibrosServerController methodsFor: 'operation messages' stamp: 'CF 7/2/2019 11:33:47'!
+errorMessage:message
+	^'1|',message ! !
+
+!TusLibrosServerController methodsFor: 'operation messages' stamp: 'CF 7/3/2019 11:21:46'!
 succesMessage: message
-	^'0|',message .! !
+	^'0',message .! !
+
 
 
 !classDefinition: #TusLibrosWebClient category: #TusLibrosClientServerDemo!

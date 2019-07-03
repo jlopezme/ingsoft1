@@ -103,6 +103,10 @@ addToCart: cartId  bookIsbn: bookIsbn bookQuantity: bookQuantity
 createCart: userID withPass: userPass
 	^systemFacade createCartFor: userID authenticatedWith: userPass ! !
 
+!TusLibrosSystemFacadeTest methodsFor: 'private' stamp: 'CF 7/3/2019 10:47:03'!
+listCart: cartID
+	^ systemFacade listCartIdentifiedAs: cartID .! !
+
 
 !TusLibrosSystemFacadeTest methodsFor: 'tests - create cart' stamp: 'HAW 6/19/2018 11:40:51'!
 test01CanCreateCartWithValidUserAndPassword
