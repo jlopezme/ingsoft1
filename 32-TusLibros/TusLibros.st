@@ -216,6 +216,10 @@ item
 
 	^ item! !
 
+!LineItem methodsFor: 'accessing' stamp: 'CF 7/6/2019 17:38:09'!
+quantity
+	^quantity .! !
+
 !LineItem methodsFor: 'accessing' stamp: 'HernanWilkinson 6/22/2013 12:21'!
 total
 

@@ -229,7 +229,7 @@ stopListening
 	webServer stopListener! !
 
 
-!TusLibrosServerController methodsFor: 'initialization' stamp: 'CF 7/3/2019 11:22:13'!
+!TusLibrosServerController methodsFor: 'initialization' stamp: 'CF 7/8/2019 10:53:17'!
 initialize
 
 	hiList := self hiList.
@@ -271,7 +271,6 @@ initialize
 					
 	webServer addService: '/listCart' action: [
 			:request| |fields cartId message  |
-			self halt.
 			[fields:= (request fields at:'fields') substrings.
 			cartId := (fields at: 1) asNumber .
 			message := self listCart: cartId .			
@@ -282,8 +281,49 @@ initialize
 			request send404Response: ( self errorMessage: (anError messageText)) ]
 		
 		].		
-					
-					
+		
+	webServer addService: '/checkOutCart' action: [
+			:request| |fields cartId ccn cced ccedMonth ccedYear cco message  |
+			[fields:= (request fields at:'fields') substrings.
+			cartId := (fields at: 1) asNumber .
+			ccn := (fields at: 2).
+			ccedMonth := (fields at: 3) asString .
+			ccedYear := (fields at: 4) asNumber .
+			cced := Month month: ccedMonth year: ccedYear .
+			cco := (fields at: 5),' ',(fields at: 6).
+			message := (self checkOutCart: cartId ccn: ccn  cceed: cced  cco: cco) asString .
+						
+			request send200Response: (self succesMessage: ('|',message )).
+			]
+			on:Error 
+			do: [ :anError |
+			request send404Response: ( self errorMessage: (anError messageText)) ]
+		
+		].	
+	
+		webServer addService: '/listPurchases' action: [
+			:request| |fields clientID clientPass message  |
+			[fields:= (request fields at:'fields') substrings.
+			clientID := (fields at: 1) .
+			clientPass := (fields at:2).
+			self halt.
+			message := self listPurchases: clientID password: clientPass .			
+			request send200Response: (self succesMessage: message ).
+			]
+			on:Error 
+			do: [ :anError |
+			request send404Response: ( self errorMessage: (anError messageText)) ]
+		
+		].		
+			
+"	Recurso: /listPurchases
+Parámetros:
+clientId: ID del cliente que quiere ver que compras hizo
+password: Password del cliente que valida que puede operar con TusLibros.com
+Output:
+En caso de éxito: 0|ISBN_1|QUANTITY_1|....|ISBN_N|QUANTITY_N|TOTAL_AMOUNT
+En caso de error: 1|DESCRIPCION_DE_ERROR"
+	
 	
 	webServer addService: '/sayHi' action:[:request |	
 		
@@ -317,6 +357,11 @@ port
 addToCart: cartId  bookIsbn: bookIsbn bookQuantity: bookQuantity 
 	^tusLibrosSystem addToCart: cartId bookIsbn: bookIsbn  bookQuantity: bookQuantity ! !
 
+!TusLibrosServerController methodsFor: 'private' stamp: 'CF 7/6/2019 15:52:14'!
+checkOutCart: cartId ccn: creditCardNumber cceed: ccExpirationDate cco:ccOwner
+	^ tusLibrosSystem checkOutCart: cartId ccn: creditCardNumber  cceed: ccExpirationDate  cco: ccOwner 
+	! !
+
 !TusLibrosServerController methodsFor: 'private' stamp: 'CF 7/2/2019 11:24:56'!
 createCart: userID withPass: userPass
 	^tusLibrosSystem createCart: userID withPass: userPass ! !
@@ -328,17 +373,28 @@ hiList
 	
 	! !
 
-!TusLibrosServerController methodsFor: 'private' stamp: 'CF 7/3/2019 11:19:57'!
+!TusLibrosServerController methodsFor: 'private' stamp: 'CF 7/8/2019 11:47:31'!
 listCart: cartID
 	
 	|content cartList|
-	self halt.
+	
 	content :=tusLibrosSystem listCart: cartID .
 	cartList := ''.
 	content keysDo: [:aKey | 
- 	cartList := cartList , '|', aKey ,'|', ((content at: aKey ) asString ).	
-	].
+ 	cartList := cartList , '|', aKey ,'|', ((content at: aKey ) asString ).].
 	^cartList .! !
+
+!TusLibrosServerController methodsFor: 'private' stamp: 'CF 7/8/2019 11:46:54'!
+listPurchases: clientId password: password
+	|purchases sales ticket total  |
+	purchases :=tusLibrosSystem listPurchases: clientId password: password .
+	sales := tusLibrosSystem salesDoneBy: clientId .
+	ticket :=''.
+	ticket := self createTicketWithSales: sales .
+	total :=0.
+	purchases keysDo: [:item |total :=total +(purchases at:item).].						
+	ticket := ticket , '|' , (total asString).
+	^ticket .! !
 
 !TusLibrosServerController methodsFor: 'private' stamp: 'NR 6/24/2019 07:15:43'!
 sayRandomHi
@@ -355,6 +411,13 @@ errorMessage:message
 succesMessage: message
 	^'0',message .! !
 
+
+!TusLibrosServerController methodsFor: 'formatting' stamp: 'CF 7/8/2019 11:43:30'!
+createTicketWithSales: sales
+	|ticket|
+	ticket:=''.
+	sales do: [:sale| sale lineItemsDo: [:lineItem| ticket :=ticket,'|', (lineItem item) ,'|', ((lineItem quantity )asString ).]] .
+	^ticket .! !
 
 
 !classDefinition: #TusLibrosWebClient category: #TusLibrosClientServerDemo!

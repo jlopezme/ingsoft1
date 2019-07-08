@@ -1,6 +1,6 @@
 !classDefinition: #TusLibrosSystemFacadeTest category: #'TusLibros-Tests'!
 TestCase subclass: #TusLibrosSystemFacadeTest
-	instanceVariableNames: 'testObjectsFactory clock systemFacade'
+	instanceVariableNames: 'testObjectsFactory clock systemFacade transactionID'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibros-Tests'!
@@ -99,6 +99,12 @@ test16CanNotListPurchasesOfValidCustomerWithInvalidPassword
 addToCart: cartId  bookIsbn: bookIsbn bookQuantity: bookQuantity 
 	^systemFacade add: bookQuantity of: bookIsbn toCartIdentifiedAs: cartId ! !
 
+!TusLibrosSystemFacadeTest methodsFor: 'private' stamp: 'CF 7/6/2019 16:45:45'!
+checkOutCart: cartId ccn: creditCardNumber cceed: ccExpirationDate cco:ccOwner
+	systemFacade checkOutCartIdentifiedAs: cartId withCreditCardNumbered: creditCardNumber  ownedBy: ccOwner  expiringOn: ccExpirationDate.
+	transactionID := transactionID +1.
+	^transactionID .! !
+
 !TusLibrosSystemFacadeTest methodsFor: 'private' stamp: 'CF 7/2/2019 11:24:42'!
 createCart: userID withPass: userPass
 	^systemFacade createCartFor: userID authenticatedWith: userPass ! !
@@ -106,6 +112,17 @@ createCart: userID withPass: userPass
 !TusLibrosSystemFacadeTest methodsFor: 'private' stamp: 'CF 7/3/2019 10:47:03'!
 listCart: cartID
 	^ systemFacade listCartIdentifiedAs: cartID .! !
+
+!TusLibrosSystemFacadeTest methodsFor: 'private' stamp: 'CF 7/8/2019 10:58:13'!
+listPurchases: clientId password: password
+	|ticket|
+	
+	ticket := systemFacade listPurchasesOf: clientId authenticatingWith: password .
+	^ticket .! !
+
+!TusLibrosSystemFacadeTest methodsFor: 'private' stamp: 'CF 7/8/2019 11:17:25'!
+salesDoneBy: aUser
+	^systemFacade salesDoneBy: aUser .! !
 
 
 !TusLibrosSystemFacadeTest methodsFor: 'tests - create cart' stamp: 'HAW 6/19/2018 11:40:51'!
@@ -151,18 +168,19 @@ merchantProcessor
 
 	^self! !
 
-!TusLibrosSystemFacadeTest methodsFor: 'setup' stamp: 'HernanWilkinson 6/17/2015 20:53'!
+!TusLibrosSystemFacadeTest methodsFor: 'setup' stamp: 'CF 7/6/2019 16:45:02'!
 setUp
 
 	testObjectsFactory := StoreTestObjectsFactory new.
 	clock := ManualClock now: testObjectsFactory today.
+	transactionID := 0.
 	systemFacade := TusLibrosSystemFacade
 		authenticatingWith: self validUsersAndPasswords
 		acceptingItemsOf: testObjectsFactory defaultCatalog
 		registeringOn: self createSalesBook
 		debitingThrought: self merchantProcessor
 		measuringTimeWith: clock
-! !
+	! !
 
 
 !TusLibrosSystemFacadeTest methodsFor: 'test objects' stamp: 'HernanWilkinson 6/22/2013 00:15'!
