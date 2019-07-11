@@ -24,16 +24,33 @@ initializeWith: aTitle
 	"self model when: #newSubstringsArrived send: #refreshSubstringList to: self."! !
 
 
-!TusLibrosClientWindow methodsFor: 'access' stamp: 'CF 6/30/2019 16:15:14'!
-login
-	! !
-
 !TusLibrosClientWindow methodsFor: 'access' stamp: 'NR 6/25/2019 23:27:24'!
 refreshSubstringList
 	
 	substringsList updateList.
 	substringsList setSelectionIndex: 0.
 	! !
+
+
+!TusLibrosClientWindow methodsFor: 'box creation' stamp: 'CF 7/8/2019 17:03:11'!
+createPassBox
+	|textBox |
+	
+	textBox := TextModelMorph textProvider: self model textGetter: #userPass  textSetter: #userPass:  . 
+	textBox textMorph setProperty: #keyStroke: toValue: [ :key | textBox textMorph acceptContents ] .
+	textBox  borderWidth: 1; borderColor: Color black.
+	textBox emptyTextDisplayMessage: 'Enter UserPassword' .
+	^textBox ! !
+
+!TusLibrosClientWindow methodsFor: 'box creation' stamp: 'CF 7/8/2019 16:53:50'!
+createUserBox
+	|textBox |
+	
+	textBox := TextModelMorph textProvider: self model textGetter: #userID  textSetter: #userID:  . 
+	textBox textMorph setProperty: #keyStroke: toValue: [ :key | textBox textMorph acceptContents ] .
+	textBox  borderWidth: 1; borderColor: Color black.
+	textBox emptyTextDisplayMessage: 'Enter UserID' .
+	^textBox ! !
 
 
 !TusLibrosClientWindow methodsFor: 'GUI building' stamp: 'NR 6/25/2019 22:12:15'!
@@ -81,10 +98,10 @@ build2ndRow
 
 	^secondtRowLayout.! !
 
-!TusLibrosClientWindow methodsFor: 'GUI building' stamp: 'cf 7/1/2019 19:32:50'!
+!TusLibrosClientWindow methodsFor: 'GUI building' stamp: 'CF 7/8/2019 16:55:16'!
 buildMorphicWindow
-	userIDmorph := self createTextBoxWithTextPlaceHolder:'Enter User ID'.
-	passUsermorph := self createTextBoxWithTextPlaceHolder: 'Enter User Password'.
+	userIDmorph := self createUserBox .
+	passUsermorph := self createPassBox .
 	self layoutMorph beColumn;
 	separation: 1;
 	padding: #center;
@@ -104,15 +121,6 @@ createRowWith: layotToAdd separationOf: separationAmount PaddingOf: paddingOrien
 
 	^rowLayout.! !
 
-!TusLibrosClientWindow methodsFor: 'GUI building' stamp: 'cf 7/1/2019 19:28:25'!
-createTextBoxWithTextPlaceHolder: textPlaceHolder
-	|textBox|
-	textBox := TextModelMorph textProvider: self model textGetter: #userIDText textSetter: #userIDText:. 
-	textBox textMorph setProperty: #keyStroke: toValue: [ :key | textBox textMorph acceptContents ] .
-	textBox  borderWidth: 1; borderColor: Color black.
-	textBox emptyTextDisplayMessage: textPlaceHolder .
-	^textBox ! !
-
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
 !classDefinition: 'TusLibrosClientWindow class' category: #TusLibrosClientServerDemo!
@@ -125,18 +133,28 @@ open
 	^self new initializeWith: 'Tus Libros loggin'.! !
 
 
-!classDefinition: #TusLibrosClientWindowModel category: #TusLibrosClientServerDemo!
-Object subclass: #TusLibrosClientWindowModel
-	instanceVariableNames: 'webClient listOfWords sentence selectedIndex userID userPass'
+!classDefinition: #ErrorWindow category: #TusLibrosClientServerDemo!
+TusLibrosClientWindow subclass: #ErrorWindow
+	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibrosClientServerDemo'!
 
-!TusLibrosClientWindowModel methodsFor: 'PluggableListSelectors' stamp: 'NR 6/24/2019 06:26:32'!
-substringList
-	
-	^listOfWords.
-! !
+
+!classDefinition: #SessionWindow category: #TusLibrosClientServerDemo!
+TusLibrosClientWindow subclass: #SessionWindow
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'TusLibrosClientServerDemo'!
+
+
+!classDefinition: #TusLibrosClientWindowModel category: #TusLibrosClientServerDemo!
+Object subclass: #TusLibrosClientWindowModel
+	instanceVariableNames: 'webClient selectedIndex userID userPass tusLibrosSystem'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'TusLibrosClientServerDemo'!
 
 !TusLibrosClientWindowModel methodsFor: 'PluggableListSelectors' stamp: 'NR 6/25/2019 21:44:28'!
 substringsListIndex
@@ -149,7 +167,7 @@ substringsListIndex: anIndex
 	selectedIndex := anIndex.! !
 
 
-!TusLibrosClientWindowModel methodsFor: 'initialization' stamp: 'cf 7/1/2019 19:29:21'!
+!TusLibrosClientWindowModel methodsFor: 'initialization' stamp: 'CF 7/8/2019 17:21:51'!
 initialize
 
 	listOfWords := OrderedCollection new.
@@ -157,41 +175,38 @@ initialize
 	selectedIndex:=0.
 	webClient := TusLibrosWebClient new.
 	userID := ''.
-	userPass := '1234'.! !
+	userPass := ''.
+	tusLibrosSystem := TusLibrosSystemFacadeTest new setUp .! !
 
 
-!TusLibrosClientWindowModel methodsFor: 'TextModelMorphSelectors' stamp: 'NR 6/25/2019 21:43:32'!
-sentenceText
+!TusLibrosClientWindowModel methodsFor: 'TextModelMorphSelectors' stamp: 'CF 7/8/2019 16:44:19'!
+userID
 	
-	^sentence.! !
+	^userID .! !
 
-!TusLibrosClientWindowModel methodsFor: 'TextModelMorphSelectors' stamp: 'NR 6/25/2019 21:43:51'!
-sentenceText: aSentence
-
-	sentence:=aSentence.
-	^true.! !
-
-!TusLibrosClientWindowModel methodsFor: 'TextModelMorphSelectors' stamp: 'cf 7/1/2019 19:27:15'!
-userIDText
-	
-	^sentence.! !
-
-!TusLibrosClientWindowModel methodsFor: 'TextModelMorphSelectors' stamp: 'cf 7/1/2019 19:27:46'!
-userIDText: userText
+!TusLibrosClientWindowModel methodsFor: 'TextModelMorphSelectors' stamp: 'CF 7/8/2019 16:44:37'!
+userID: userText
 	userID := userText.
 	^true.! !
 
+!TusLibrosClientWindowModel methodsFor: 'TextModelMorphSelectors' stamp: 'CF 7/8/2019 17:02:43'!
+userPass
+	^userPass ! !
 
-!TusLibrosClientWindowModel methodsFor: 'PluggableButtonSelectors' stamp: 'cf 7/1/2019 19:33:22'!
+!TusLibrosClientWindowModel methodsFor: 'TextModelMorphSelectors' stamp: 'CF 7/8/2019 17:02:50'!
+userPass: userText
+	userPass := userText . 
+	^true.! !
+
+
+!TusLibrosClientWindowModel methodsFor: 'PluggableButtonSelectors' stamp: 'CF 7/11/2019 15:28:27'!
 login
-	self halt .! !
-
-!TusLibrosClientWindowModel methodsFor: 'PluggableButtonSelectors' stamp: 'CF 6/30/2019 15:57:24'!
-sendSubtringsRequest
-
-	listOfWords := webClient sendRequest: sentence.
 	
-	self triggerEvent: #newSubstringsArrived with: self.
+
+	[SessionWindow with: (tusLibrosSystem createCart: userID withPass: userPass) open. ]
+	on:Error
+	do: [:anError|
+		(ErrorWindow with: (anError messageText )) open.]
 	! !
 
 !TusLibrosClientWindowModel methodsFor: 'PluggableButtonSelectors' stamp: 'NR 6/25/2019 22:13:32'!
@@ -206,9 +221,21 @@ showWordInTranscript
 ! !
 
 
+!classDefinition: #SessionWindowModel category: #TusLibrosClientServerDemo!
+TusLibrosClientWindowModel subclass: #SessionWindowModel
+	instanceVariableNames: 'actualCartID'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'TusLibrosClientServerDemo'!
+
+!SessionWindowModel methodsFor: 'initialization' stamp: 'CF 7/8/2019 17:22:25'!
+initialize
+	actualCartID := 0.! !
+
+
 !classDefinition: #TusLibrosServerController category: #TusLibrosClientServerDemo!
 Object subclass: #TusLibrosServerController
-	instanceVariableNames: 'webServer port hiList tusLibrosSystem'
+	instanceVariableNames: 'webServer port tusLibrosSystem'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibrosClientServerDemo'!
@@ -229,11 +256,10 @@ stopListening
 	webServer stopListener! !
 
 
-!TusLibrosServerController methodsFor: 'initialization' stamp: 'CF 7/8/2019 10:53:17'!
+!TusLibrosServerController methodsFor: 'initialization' stamp: 'CF 7/11/2019 15:25:36'!
 initialize
 
-	hiList := self hiList.
-	
+
 	webServer := WebServer new listenOn: self port.
 	
 	tusLibrosSystem := TusLibrosSystemFacadeTest new setUp .
@@ -306,7 +332,6 @@ initialize
 			[fields:= (request fields at:'fields') substrings.
 			clientID := (fields at: 1) .
 			clientPass := (fields at:2).
-			self halt.
 			message := self listPurchases: clientID password: clientPass .			
 			request send200Response: (self succesMessage: message ).
 			]
@@ -315,30 +340,7 @@ initialize
 			request send404Response: ( self errorMessage: (anError messageText)) ]
 		
 		].		
-			
-"	Recurso: /listPurchases
-Parámetros:
-clientId: ID del cliente que quiere ver que compras hizo
-password: Password del cliente que valida que puede operar con TusLibros.com
-Output:
-En caso de éxito: 0|ISBN_1|QUANTITY_1|....|ISBN_N|QUANTITY_N|TOTAL_AMOUNT
-En caso de error: 1|DESCRIPCION_DE_ERROR"
-	
-	
-	webServer addService: '/sayHi' action:[:request |	
-		
-		request send200Response: (self sayRandomHi)].
-	
-	webServer addService: '/substrings' action:[:request | |substringsAsJson sentence substrings |
-		
-		[sentence := (request fields at:'sentence').
-		substrings := sentence substrings.
-		substringsAsJson:= WebUtils jsonEncode: (substrings).
-		request send200Response: (substringsAsJson)
-		 ] 
-		on: Error 
-		do: [ :anError |
-			request send404Response: (anError messageText) ]].
+
 	
 ! !
 
@@ -366,13 +368,6 @@ checkOutCart: cartId ccn: creditCardNumber cceed: ccExpirationDate cco:ccOwner
 createCart: userID withPass: userPass
 	^tusLibrosSystem createCart: userID withPass: userPass ! !
 
-!TusLibrosServerController methodsFor: 'private' stamp: 'NR 6/24/2019 07:16:54'!
-hiList
-	
-	^OrderedCollection with: 'Hi!!' with: 'Hodor!!' with: 'I am Groot!!' with: 'My name is Homer Simp... Doh!!' with: 'I am inevitable...' with: 'Because Im Baaaatman!!'.
-	
-	! !
-
 !TusLibrosServerController methodsFor: 'private' stamp: 'CF 7/8/2019 11:47:31'!
 listCart: cartID
 	
@@ -395,12 +390,6 @@ listPurchases: clientId password: password
 	purchases keysDo: [:item |total :=total +(purchases at:item).].						
 	ticket := ticket , '|' , (total asString).
 	^ticket .! !
-
-!TusLibrosServerController methodsFor: 'private' stamp: 'NR 6/24/2019 07:15:43'!
-sayRandomHi
-	
-	^hiList at: (hiList size atRandom).
-	! !
 
 
 !TusLibrosServerController methodsFor: 'operation messages' stamp: 'CF 7/2/2019 11:33:47'!
