@@ -1,0 +1,11 @@
+Para levantar el server solo deben escribir TusLibrosServerController new ,como en el ejemplo y luego para testear cada función deben enviar los siguientes comandos
+probar create cart
+createCart?fields=validUser validUserPassword
+probar addtocart
+addToCart?fields=1 validBook 3
+probar listCart
+listCart?fields=1
+probar checkout
+checkOutCart?fields=1 1111222233334444 July 2020 Juan Perez
+probar listPurchases
+listPurchases?fields=validUser validUserPassword
